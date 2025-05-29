@@ -12,7 +12,7 @@ router.get('/google/callback',
     (req, res) => {
         // success, redirect home.
         const user = req.user;
-        const token= jwt.sign({id:user.id,email:user.emails?.[0].value}, process.env.JWT_SECRET, {expiresIn: '1h'});
+        const token= jwt.sign({id:user.id,email:user.emails?.[0].value}, process.env.JWT_SECRET, {expiresIn: '3d'});
         // console.log("User authenticated successfully:", user);
         res.redirect('http://localhost:3000/home?token=' + token); 
         
