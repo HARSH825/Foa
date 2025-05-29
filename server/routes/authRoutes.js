@@ -2,7 +2,7 @@ import { Router } from "express";
 import passport from "../auth/gAuth.js";
 const router = Router();
 import jwt from 'jsonwebtoken';
-
+import prisma from "../config/prismaClient.js";
 router.get('/google', 
     passport.authenticate('google', { scope: ['profile', 'email'] })
 );
@@ -27,5 +27,12 @@ router.get('/logout', (req, res) => {
         res.redirect('/signin');
     });
 });
+
+router.get('/profile', async (req, res) => {
+    //basic route to check if db is working, get all users
+    const users = await prisma.user.findMany();
+    return res.json(users);
+}
+);
 
 export default router;

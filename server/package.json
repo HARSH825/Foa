@@ -21,11 +21,17 @@
   },
   "homepage": "https://github.com/HARSH825/Foa#readme",
   "dependencies": {
+    "@prisma/client": "^6.8.2",
+    "@prisma/extension-accelerate": "^2.0.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.10",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0"
+  },
+  "devDependencies": {
+    "@prisma/adapter-pg": "^6.8.2",
+    "prisma": "^6.8.2"
   }
 }
