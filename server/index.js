@@ -11,7 +11,7 @@ dotenv.config();
 app.use(passport.initialize());
 // Routes
 app.use('/auth', authRoutes);
-
+app.use('/api/v1/interview' , interviewRoutes); 
 app.get('/', (req, res) => {
   res.send('Hello, World!');
 });
