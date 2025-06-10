@@ -9,17 +9,44 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DATABASE_URL")
 }
 
 model User {
-  id          String   @id @default(cuid())
-  googleId    String   @unique
-  email       String   @unique
-  name        String?
-  picture     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String      @id @default(cuid())
+  googleId   String      @unique
+  email      String      @unique
+  name       String?
+  picture    String?
+  interviews Interview[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Interview {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id])
+  type           String // e.g., 'Technical', 'Behavioral', etc.
+  position       String
+  experience     String
+  specialization String
+  company        String?
+  style          String? // e.g., 'Leetcode', 'System Design'
+  resumeUrl      String?
+  duration       Int // in minutes
+  createdAt      DateTime        @default(now())
+  InterviewChat  InterviewChat[]
+}
+
+model InterviewChat {
+  id            String    @id @default(cuid())
+  interviewId   String
+  interview     Interview @relation(fields: [interviewId], references: [id])
+  sender        String // "user" | "ai"
+  message       String
+  timestamp     DateTime  @default(now())
+  resumeSummary String?
 }
