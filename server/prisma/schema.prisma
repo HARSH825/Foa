@@ -39,6 +39,7 @@ model Interview {
   duration       Int // in minutes
   createdAt      DateTime        @default(now())
   InterviewChat  InterviewChat[]
+  resumeContent String?
 }
 
 model InterviewChat {
