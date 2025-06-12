@@ -8,7 +8,7 @@ const gAuthMiddleware = (req, res, next) => {
     }
     try{
         const decoded  = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
+        req.user = decoded;  // attached user to the request . 
         next();
     }
     catch(err) {
