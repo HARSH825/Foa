@@ -8,7 +8,9 @@ console.log("Google Strategy initialized");
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback"
+    callbackURL: "/auth/google/callback",
+    scope: ['profile', 'email'],
+
 },
 async function(accessToken, refreshToken, profile, done) {
     //save user profile to database 
