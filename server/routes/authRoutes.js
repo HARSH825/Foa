@@ -14,6 +14,7 @@ router.get('/google/callback',
         const user = req.user;
         const token= jwt.sign({id:user.id,email:user.emails?.[0].value}, process.env.JWT_SECRET, {expiresIn: '3d'});
         // console.log("User authenticated successfully:", user);
+        console.log("Token generated successfully:", token);
         res.redirect('http://localhost:3000/home?token=' + token); 
         
     }
