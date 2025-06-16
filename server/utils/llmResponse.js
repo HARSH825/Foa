@@ -51,7 +51,7 @@ RESUME CONTEXT:
 ${resumeContent || 'Resume content not provided'}
 
 CONVERSATION HISTORY:
-${formatChatHistory(chatHistory)}
+${chatHistory}
 
 CURRENT CANDIDATE RESPONSE:
 "${userMessage}"
@@ -112,19 +112,6 @@ IMPORTANT REMINDERS:
 Respond as the interviewer would in this moment of the conversation. Be natural, engaging, and focused on learning more about this candidate's potential fit for the ${position} role at ${company}.`;
 };
 
-const formatChatHistory = (chatHistory) => {
-    if (!chatHistory || chatHistory.length === 0) {
-        return 'This is the beginning of the interview.';
-    }
-    
-    if (Array.isArray(chatHistory)) {
-        return chatHistory
-            .map(msg => `${msg.role === 'interviewer' ? 'Interviewer' : 'Candidate'}: ${msg.content}`)
-            .join('\n');
-    }
-    
-    return chatHistory;
-};
 
 const validateInterviewData = (interviewChat) => {
     const requiredFields = ['position', 'company', 'type', 'experience'];
