@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/HARSH825/Foa#readme",
   "dependencies": {
+    "@google/genai": "^1.5.1",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.8.2",
     "@prisma/extension-accelerate": "^2.0.1",
     "axios": "^1.9.0",
