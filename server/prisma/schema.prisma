@@ -36,7 +36,7 @@ model Interview {
   company        String?
   style          String? // e.g., 'Leetcode', 'System Design'
   resumeUrl      String?
-  duration       Int // in minutes
+  duration       String // in minutes
   createdAt      DateTime        @default(now())
   InterviewChat  InterviewChat[]
   resumeContent String?
