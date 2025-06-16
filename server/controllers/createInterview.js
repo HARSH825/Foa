@@ -19,7 +19,7 @@ const createInterview = async (req, res) => {
     
     //will replace with zod validation later
     const {type , position , experience , specialization, company , style ,duration} = req.body;
-    if(!type || !position || !experience || !specialization || !company || !style || !resumeUrl || !duration) {
+    if(!type || !position || !experience || !specialization || !company || !style || !result || !duration) {
         return res.status(400).json({ message: 'All fields are required!' });
     }
 
