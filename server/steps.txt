@@ -1,0 +1,29 @@
+//next steps
+
+1) COMPLETED GOOGLE OAUTH AND ITS ROUTES AND AUTHENTICATION MIDDLEWARE THAT EXPECTS A JWT TOKEN TO AUTHENTICATE PAGES.
+2) SET UP DB WITH ACCELERATE. Added users table . OAuth results are being stored in the db as needed. 
+3) Now on core functionalites :
+a) Functionality to make an interview . 
+Need the interview table : {field in prims.schema}.
+Resume as an option to upload , with resume parsed content in the client request along with the above . 
+
+Now the big qs is , vapi ? or own system ? 
+
+
+Went with own system , http server simple, later will move to websockets, no need of webrtc . 
+
+Done till generatinf an interview, storing context and getting responses. All goes well, problem is with storing chat data in db calls, increaisg latency and also not good, since hitting db in every call . Need to optimise this , maybe in memory storage db might help .
+
+Also , need to enhance prompt prooperly , also might need to change interview shchema to directly include name of the user . 
+
+Next is generating feedback from chat, isnt very difficuilt , prety simple. 
+
+Need to enhance prompt to make sure it works well like a real interviewer.
+
+converted the audio to text , (REMAINING VICE VERSA FOR AI INTERVIEWER ).
+NEED TO THINK ABOUT THE END INTERVIEW AUTOMATION / MANUAL FLOW , AND DELETING THE INTERVIEW AND CREATING THE SUMMARY . 
+
+
+stuck at summary generation api .
+
+dONE GENERATION OF SUMMARY . 

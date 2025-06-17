@@ -16,15 +16,16 @@ const startInterview = async (req, res) => {
   }
 
   try {
-    const interviewChat = await prisma.interview.findUnique({
+    const chats = await prisma.interview.findUnique({
       where: { id: interviewID },
       include: {
         InterviewChat: {
-          orderBy: { timestamp: 'asc' },
+          take: 30,
+          orderBy: { timestamp: 'desc' },
         },
       },
     });
-
+    const interviewChat = chats.InterviewChat.reverse();
     if (!interviewChat) {
       return res.status(404).json({ message: 'Interview not found!' });
     }
