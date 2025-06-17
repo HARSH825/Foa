@@ -1,24 +1,27 @@
 'use client'
-import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 const DashBoard = ()=>{
-
+    const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
+    if(token && typeof window !== 'undefined'){
+        localStorage.setItem("token",token);
+    }
+    else {
+        router.push('/');
+    }
+    const {userData} = useAuth();
 
-    useEffect(()=>{
-        if(token){
-            localStorage.setItem("token",token);
-        }
-    },[token]);
-
+    console.log(userData);
     return(
-        <div>
-            DashBoard
-            <div> {token ? (<p>Logged In successfully </p>) : (<p>Authenticating</p>)}</div>
-        </div>
+                <div className="p-8">
+                <div className="text-2xl font-bold">
+                    Hey {userData?.name || 'champion'}! Ready to <span className="font-extrabold text-white">crush</span> it?
+                </div>
+                </div>
     )
 }
 
 export default DashBoard;
+
