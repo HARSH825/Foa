@@ -24,13 +24,14 @@ export const AuthProvider =  ({children}:{children : React.ReactNode})=>{
     const [userData,setUserData] = useState<User|null>(null);
 
     useEffect(()=>{
+      console.log("Auth mounted");
         fetchUserDetails();
     },[]);
     
     
   const fetchUserDetails = async () => {
     let token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token){console.log("No token in localsotrage"); return;}
     try {
       const response = await axios.get("http://localhost:4000/auth/profile", {
         headers: {
