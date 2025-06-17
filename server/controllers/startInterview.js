@@ -1,11 +1,16 @@
 import prisma from "../config/prismaClient.js";
 import getResponse from "../utils/llmResponse.js";
 import saveToDb from "../utils/saveToDB.js";
+import transcribeMessage from "../utils/transcribe.js";
 
 const startInterview = async (req, res) => {
   const interviewID = req.params.interviewId;
-  const userMessage = req.body.message;
-    console.log("usr msg : "+userMessage);
+  const userFile = req.file;
+    if (!userFile) {
+    return res.status(404).json({ msg: "audio file not found" });
+  }
+  const userMessage = await transcribeMessage(userFile);
+  console.log("User message trranscrbed : "+ userMessage);
   if (!interviewID || !userMessage) {
     return res.status(400).json({ message: 'Interview ID and message are required!' });
   }
@@ -29,12 +34,11 @@ const startInterview = async (req, res) => {
     }).join('\n');
     // console.log(chatHistory);
 
-    
-
     const llmResponse = await getResponse(chatHistory, interviewChat,userMessage);
     console.log("llm resp : "+llmResponse);
     await saveToDb(interviewID, userMessage, llmResponse);
 
+    //convert llm response to speech here , and pass to the frontend .
     return res.json({ response: llmResponse });
   } catch (error) {
     console.error(error);
