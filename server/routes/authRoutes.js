@@ -30,10 +30,37 @@ router.get('/logout', (req, res) => {
 });
 
 router.get('/profile', async (req, res) => {
-    //basic route to check if db is working, get all users
-    const users = await prisma.user.findMany();
-    return res.json(users);
-}
-);
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ msg: "Token required or improperly formatted" });
+  }
+
+  const token = authHeader.split(" ")[1]; 
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        picture: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error("Failed to fetch user profile:", err);
+    return res.status(403).json({ msg: "Invalid or expired token" });
+  }
+});
+
 
 export default router;

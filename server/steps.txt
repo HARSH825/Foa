@@ -26,4 +26,11 @@ NEED TO THINK ABOUT THE END INTERVIEW AUTOMATION / MANUAL FLOW , AND DELETING TH
 
 stuck at summary generation api .
 
-dONE GENERATION OF SUMMARY . 
+dONE GENERATION OF SUMMARY .
+
+Create auth context , now userData abvaible through tthe appliation . 
+Header done , hero done, auth done . 
+Logoutfucntionality done . 
+
+
+Now working with the dashbord after login . 

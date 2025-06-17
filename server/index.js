@@ -3,9 +3,12 @@ import dotenv from 'dotenv';
 import passport from './auth/gAuth.js';
 import authRoutes from './routes/authRoutes.js';
 import interviewRoutes from './routes/interviewRoutes.js';
+import cors from 'cors'
 
 const app = express();
 dotenv.config();
+
+app.use(cors());
 app.use(express.json());
 
 app.use(passport.initialize());

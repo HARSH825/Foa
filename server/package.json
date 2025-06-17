@@ -28,6 +28,7 @@
     "@prisma/extension-accelerate": "^2.0.1",
     "axios": "^1.9.0",
     "cloudinary": "^2.6.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "elevenlabs-js": "^1.2.6",
     "express": "^5.1.0",
