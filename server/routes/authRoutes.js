@@ -14,7 +14,7 @@ router.get('/google/callback',
         const user = req.user;
         const token= jwt.sign({id:user.id,email:user.emails?.[0].value}, process.env.JWT_SECRET, {expiresIn: '3d'});
         // console.log("User authenticated successfully:", user);
-        console.log("Token generated successfully:", token);
+        // console.log("Token generated successfully:", token);
         res.redirect('http://localhost:3000/home?token=' + token); 
         
     }
@@ -31,7 +31,7 @@ router.get('/logout', (req, res) => {
 
 router.get('/profile', async (req, res) => {
   const authHeader = req.headers.authorization;
-
+    // console.log("auth header : "+authHeader);
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ msg: "Token required or improperly formatted" });
   }
@@ -54,7 +54,7 @@ router.get('/profile', async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-
+    // console.log("User is : "+user);
     res.json(user);
   } catch (err) {
     console.error("Failed to fetch user profile:", err);
