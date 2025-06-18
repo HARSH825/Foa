@@ -20,8 +20,9 @@ const getSummary = async(req , res)=>{
         }).join('\n');
 
         const response = await summarise(chatHistory);
+        let finalResponse =  response.trim().replace(/^```json\s*|\s*```$/g, '');
 
-        return res.json({summary : response});
+        return res.json({summary : finalResponse});
 
     }
     catch(err){

@@ -6,13 +6,16 @@ import transcribeMessage from "../utils/transcribe.js";
 const startInterview = async (req, res) => {
   const interviewID = req.params.interviewId;
   const userFile = req.file;
-    if (!userFile) {
-    return res.status(404).json({ msg: "audio file not found" });
+
+  if (!userFile) {
+    return res.status(404).json({ msg: "Audio file not found" });
   }
+
   const userMessage = await transcribeMessage(userFile);
-  console.log("User message trranscrbed : "+ userMessage);
+  console.log("User message transcribed:", userMessage);
+
   if (!interviewID || !userMessage) {
-    return res.status(400).json({ message: 'Interview ID and message are required!' });
+    return res.status(400).json({ message: "Interview ID and message are required!" });
   }
 
   try {
@@ -21,31 +24,33 @@ const startInterview = async (req, res) => {
       include: {
         InterviewChat: {
           take: 30,
-          orderBy: { timestamp: 'desc' },
+          orderBy: { timestamp: "desc" },
         },
       },
     });
-    const interviewChat = chats.InterviewChat.reverse();
-    if (!interviewChat) {
-      return res.status(404).json({ message: 'Interview not found!' });
+
+    if (!chats) {
+      return res.status(404).json({ message: "Interview not found!" });
     }
 
-    const chatHistory = interviewChat.InterviewChat.map(chat => {
-      return `${chat.sender === 'user' ? 'USER' : 'AI'} : ${chat.message}`;
-    }).join('\n');
-    // console.log(chatHistory);
+    const interviewChat = chats.InterviewChat?.reverse() || [];
 
-    const llmResponse = await getResponse(chatHistory, interviewChat,userMessage);
-    console.log("llm resp : "+llmResponse);
+    const chatHistory = interviewChat
+      .map(chat => `${chat.sender === "user" ? "USER" : "AI"} : ${chat.message}`)
+      .join("\n");
+
+    const llmResponse = await getResponse(chatHistory, interviewChat, userMessage);
+    console.log("LLM response:", llmResponse);
+
     await saveToDb(interviewID, userMessage, llmResponse);
 
-    //convert llm response to speech here , and pass to the frontend .
-    return res.json({ response: llmResponse });
+    // Optionally: Add TTS logic here to convert `llmResponse` to audio
+
+    return res.json({ response: llmResponse , userMessage:userMessage});
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Error in startInterview:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
 export default startInterview;
-
