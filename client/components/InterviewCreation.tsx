@@ -69,8 +69,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
 
   const handleStartInterview = () => {
     if (createdInterview) {
-      // Navigate to interview page with the interview ID
-      router.push(`/interview/${createdInterview.id}`);
+      router.push(`/start/${createdInterview.id}`);
     }
   };
 
