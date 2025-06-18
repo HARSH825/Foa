@@ -76,7 +76,7 @@ const PastInterviewPage = () => {
               </div>
               <button
                 className="text-sm bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90"
-                onClick={() => router.push(`/review/${interview.id}`)} 
+                onClick={() => router.push(`/summary/${interview.id}`)} 
               >
                 Review
               </button>
