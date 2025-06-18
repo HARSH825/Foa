@@ -8,9 +8,6 @@ const DashBoard = ()=>{
     if(token && typeof window !== 'undefined'){
         localStorage.setItem("token",token);
     }
-    else {
-        router.push('/');
-    }
     const {userData} = useAuth();
 
     console.log(userData);

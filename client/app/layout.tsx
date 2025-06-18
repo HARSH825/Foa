@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/Theme";
 import Header from "@/components/Header";
 import { AuthProvider } from "./context/AuthContext";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +39,9 @@ export default function RootLayout({
         defaultTheme="dark"
         enableSystem={false}
         disableTransitionOnChange
-        >{children}
+
+        >
+          <Toaster/>{children}<Toaster/>
         </ThemeProvider>
         </AuthProvider>
       </body>
