@@ -91,7 +91,7 @@ export default function SummaryPage() {
       <div className="mt-6 text-right">
         <button
           className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-          onClick={() => router.push("/past-interviews")}
+          onClick={() => router.push("/past-interview")}
         >
           ← Back to Past Interviews
         </button>
