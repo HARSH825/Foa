@@ -1,6 +1,6 @@
 import prisma from "../config/prismaClient.js";
 import getResponse from "../utils/llmResponse.js";
-import saveToDb from "../utils/saveToDB.js";
+import { saveUserMessageAsync, saveAiMessageAsync } from "../utils/saveToDB.js";
 import transcribeMessage from "../utils/transcribe.js";
 import tts from "../utils/tts.js";
 
@@ -20,6 +20,8 @@ const startInterview = async (req, res) => {
   }
 
   try {
+    const saveUserPromise = saveUserMessageAsync(interviewID, userMessage);
+
     const chats = await prisma.interview.findUnique({
       where: { id: interviewID },
       include: {
@@ -40,14 +42,20 @@ const startInterview = async (req, res) => {
       .map(chat => `${chat.sender === "user" ? "USER" : "AI"} : ${chat.message}`)
       .join("\n");
 
-    console.log("Interview chat history:", chatHistory);
+    // console.log("Interview chat history:", chatHistory);
 
     const llmResponse = await getResponse(chatHistory, interviewID, userMessage);
     console.log("LLM response:", llmResponse);
 
-    await saveToDb(interviewID, userMessage, llmResponse);
+    saveAiMessageAsync(interviewID, llmResponse).catch(dbError => {
+      console.error("Database save error for AI message:", dbError);
+    });
 
     const { base64Audio, mimeType } = await tts(llmResponse);
+
+    saveUserPromise.catch(dbError => {
+      console.error("Database save error for user message:", dbError);
+    });
 
     return res.json({
       userMessage,
