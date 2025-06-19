@@ -26,10 +26,11 @@ const createSystemPrompt = (chatHistory) => `
 You are an expert interview coach. Analyze the following conversation between an AI interviewer and a candidate. Provide:
 
 1. A concise overview of the candidate’s key points.
-2. Three strengths demonstrated by the candidate, with brief examples.
-3. Three areas for improvement or weaknesses, with actionable guidance.
-4. Two specific recommendations for the candidate to prepare better.
+2. Max 5 Strengths demonstrated by the candidate, with brief examples.
+3. Max 5 areas for improvement or weaknesses, with actionable guidance.
+4. Max 5 specific recommendations for the candidate to prepare better.
 
+In recommendation points , do add one point stating  , do more mock interview with FOA .
 Format your output as JSON:
 {
   "overview": "...",
