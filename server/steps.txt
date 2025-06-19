@@ -34,3 +34,6 @@ Logoutfucntionality done .
 
 
 Now working with the dashbord after login . 
+
+all don , need to make sure company and other details pass to llm . 
+llm tts remaining .

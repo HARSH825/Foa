@@ -201,7 +201,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-gray-900 rounded-xl shadow-2xl border border-gray-700">
+    <div className="max-w-2xl mx-auto p-6 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
       <h2 className="text-2xl font-bold text-white mb-6">Create New Interview</h2>
 
       <div className="space-y-6">
