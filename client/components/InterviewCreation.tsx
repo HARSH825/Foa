@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { FormDataType , InterviewData, InterviewCreationFormProps } from '@/types/form';
+import { FormDataType, InterviewData, InterviewCreationFormProps } from '@/types/form';
 import { InterviewCard } from './InterviewCard';
+import { Card } from '@/components/ui/card';
 
-const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({ 
-  onSuccess, 
-  onError 
+const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
+  onSuccess,
+  onError,
 }) => {
   const { userData } = useAuth();
   const router = useRouter();
@@ -138,8 +139,6 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
 
       if (res.ok) {
         toast.success(result.message);
-        
-        // Create interview data object for the card
         const interviewData: InterviewData = {
           id: interviewId,
           type: formData.type,
@@ -151,7 +150,6 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
           duration: formData.duration,
           createdAt: new Date().toISOString(),
         };
-        
         setCreatedInterview(interviewData);
         onSuccess?.(interviewId);
       } else {
@@ -171,181 +169,143 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
 
   if (createdInterview) {
     return (
-      <div className="max-w-2xl mx-auto p-6">
+      <Card className="max-w-2xl mx-auto p-6">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">Interview Created Successfully! </h2>
-          <p className="text-gray-400">Your interview is ready. Start it now.</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Interview Created Successfully!
+          </h2>
+          <p className="text-muted-foreground">Your interview is ready. Start it now.</p>
         </div>
-        
-        <InterviewCard 
-          interview={createdInterview} 
-          onStartInterview={handleStartInterview}
-        />
-        
+        <InterviewCard interview={createdInterview} onStartInterview={handleStartInterview} />
         <div className="mt-6 flex gap-4">
           <button
             onClick={handleCreateAnother}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200"
+            className="flex-1 bg-muted text-foreground border border-border py-3 px-6 rounded-lg font-medium transition-colors duration-200 hover:bg-muted/80"
           >
             Create Another Interview
           </button>
           <button
             onClick={() => router.push('/')}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200"
+            className="flex-1 bg-primary text-primary-foreground py-3 px-6 rounded-lg font-medium transition-colors duration-200 hover:bg-primary/90"
           >
             Go to Dashboard
           </button>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
-      <h2 className="text-2xl font-bold text-white mb-6">Create New Interview</h2>
+    <Card className="max-w-2xl mx-auto p-6 space-y-6">
+      <h2 className="text-2xl font-bold text-foreground">Create New Interview</h2>
 
-      <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">
-            Interview Type *
+      {[
+        {
+          label: 'Interview Type',
+          name: 'type',
+          type: 'select',
+          options: ['Technical', 'Behavioral', 'System Design', 'General', 'HR'],
+        },
+        {
+          label: 'Position',
+          name: 'position',
+          type: 'input',
+          placeholder: 'e.g. Software Engineer',
+        },
+        {
+          label: 'Experience Level',
+          name: 'experience',
+          type: 'select',
+          options: [
+            'Entry Level (0-2 years)',
+            'Mid Level (3-5 years)',
+            'Senior Level (6-10 years)',
+            'Lead/Principal (10+ years)',
+          ],
+        },
+        {
+          label: 'Specialization',
+          name: 'specialization',
+          type: 'input',
+          placeholder: 'e.g. Frontend, Backend, Full Stack',
+        },
+        {
+          label: 'Company',
+          name: 'company',
+          type: 'input',
+          placeholder: 'e.g. Google, Microsoft, Amazon',
+        },
+        {
+          label: 'Interview Style',
+          name: 'style',
+          type: 'select',
+          options: ['friendly', 'formal', 'challenging', 'leetcode', 'system-design'],
+        },
+        {
+          label: 'Duration',
+          name: 'duration',
+          type: 'select',
+          options: ['15 minutes', '30 minutes', '45 minutes', '60 minutes', '90 minutes'],
+        },
+      ].map(({ label, name, type, options, placeholder }) => (
+        <div key={name}>
+          <label className="block text-sm font-medium text-foreground mb-1">
+            {label} *
           </label>
-          <select 
-            name="type" 
-            value={formData.type} 
-            onChange={handleInputChange} 
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="" className="text-gray-400">Select interview type</option>
-            <option value="Technical">Technical</option>
-            <option value="Behavioral">Behavioral</option>
-            <option value="System Design">System Design</option>
-            <option value="General">General</option>
-            <option value="HR">HR Round</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">
-            Position *
-          </label>
-          <input 
-            name="position" 
-            value={formData.position} 
-            onChange={handleInputChange} 
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-            placeholder="e.g. Software Engineer" 
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">
-            Experience Level *
-          </label>
-          <select 
-            name="experience" 
-            value={formData.experience} 
-            onChange={handleInputChange} 
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="" className="text-gray-400">Select level</option>
-            <option value="Entry Level (0-2 years)">Entry Level (0-2 years)</option>
-            <option value="Mid Level (3-5 years)">Mid Level (3-5 years)</option>
-            <option value="Senior Level (6-10 years)">Senior Level (6-10 years)</option>
-            <option value="Lead/Principal (10+ years)">Lead/Principal (10+ years)</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">
-            Specialization *
-          </label>
-          <input 
-            name="specialization" 
-            value={formData.specialization} 
-            onChange={handleInputChange} 
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-            placeholder="e.g. Frontend, Backend, Full Stack" 
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">
-            Company *
-          </label>
-          <input 
-            name="company" 
-            value={formData.company} 
-            onChange={handleInputChange} 
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-            placeholder="e.g. Google, Microsoft, Amazon" 
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">
-            Interview Style *
-          </label>
-          <select 
-            name="style" 
-            value={formData.style} 
-            onChange={handleInputChange} 
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="" className="text-gray-400">Select style</option>
-            <option value="friendly">Friendly</option>
-            <option value="formal">Formal</option>
-            <option value="challenging">Challenging</option>
-            <option value="leetcode">LeetCode Style</option>
-            <option value="system-design">System Design Focus</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">
-            Duration *
-          </label>
-          <select 
-            name="duration" 
-            value={formData.duration} 
-            onChange={handleInputChange} 
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="" className="text-gray-400">Select duration</option>
-            <option value="15 minutes">15 minutes</option>
-            <option value="30 minutes">30 minutes</option>
-            <option value="45 minutes">45 minutes</option>
-            <option value="60 minutes">60 minutes</option>
-            <option value="90 minutes">90 minutes</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-200">
-            Upload Resume (PDF) *
-          </label>
-          <input 
-            type="file" 
-            id="resume-upload" 
-            accept=".pdf" 
-            onChange={handleFileChange} 
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer" 
-          />
-          {formData.resume && (
-            <p className="text-sm text-gray-400 mt-1">
-              Selected: {formData.resume.name}
-            </p>
+          {type === 'input' ? (
+            <input
+              name={name}
+              value={formData[name as keyof FormDataType] as string}
+              onChange={handleInputChange}
+              placeholder={placeholder}
+              className="w-full p-3 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          ) : (
+            <select
+              name={name}
+              value={formData[name as keyof FormDataType] as string}
+              onChange={handleInputChange}
+              className="w-full p-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="" className="text-muted-foreground">
+                Select {label.toLowerCase()}
+              </option>
+              {options?.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
           )}
         </div>
+      ))}
 
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-        >
-          {isLoading ? 'Creating Interview...' : 'Create Interview'}
-        </button>
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1">
+          Upload Resume (PDF) *
+        </label>
+        <input
+          type="file"
+          id="resume-upload"
+          accept=".pdf"
+          onChange={handleFileChange}
+          className="w-full p-3 bg-background border border-border rounded-lg text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-black hover:file:bg-primary/90 file:cursor-pointer"
+        />
+        {formData.resume && (
+          <p className="text-sm text-muted-foreground mt-1">
+            Selected: {formData.resume.name}
+          </p>
+        )}
       </div>
-    </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={isLoading}
+        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+      >
+        {isLoading ? 'Creating Interview...' : 'Create Interview'}
+      </button>
+    </Card>
   );
 };
 

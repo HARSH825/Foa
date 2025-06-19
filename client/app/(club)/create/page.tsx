@@ -1,4 +1,3 @@
-// page.tsx
 'use client'
 import React from 'react';
 import InterviewCreationForm from '@/components/InterviewCreation';
@@ -13,7 +12,7 @@ const InterviewPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 py-8">
+    <div className="min-h-screen bg-black py-8">
       <div className="container mx-auto px-4">
         <InterviewCreationForm 
           onSuccess={handleSuccess}
