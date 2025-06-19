@@ -12,7 +12,7 @@ const startInterview = async (req, res) => {
   }
 
   const userMessage = await transcribeMessage(userFile);
-  console.log("User message transcribed:", userMessage);
+  // console.log("User message transcribed:", userMessage);
 
   if (!interviewID || !userMessage) {
     return res.status(400).json({ message: "Interview ID and message are required!" });
@@ -42,7 +42,7 @@ const startInterview = async (req, res) => {
       .join("\n");
 
     const llmResponse = await getResponse(chatHistory, interviewID, userMessage);
-    console.log("LLM response:", llmResponse);
+    // console.log("LLM response:", llmResponse);
 
     saveAiMessageAsync(interviewID, llmResponse).catch(dbError => {
       console.error("Database save error for AI message:", dbError);
