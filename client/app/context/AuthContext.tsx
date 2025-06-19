@@ -5,11 +5,12 @@ import axios from 'axios';
 
 //stps : create context , give name , fetch detsils, set context , export context .
 
-interface User{
-    id:string
-    name: string,
-    email:string,
-    picture: string
+interface User {
+  id: string
+  name: string,
+  email: string,
+  picture: string,
+  interviews: string[]
 }
 
 interface AuthContextType {

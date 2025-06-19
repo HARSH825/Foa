@@ -20,6 +20,8 @@ export default function DashBoard() {
   }
 
   const { userData } = useAuth();
+  const interviewsCompleted = userData?.interviews?.length || 0;
+  console.log(userData?.interviews);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-10">
@@ -40,21 +42,25 @@ export default function DashBoard() {
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center text-sm sm:text-base">
             <div>
-              <p className="text-2xl font-bold text-primary">5</p>
+              <p className="text-2xl font-bold text-primary">{interviewsCompleted}</p>
               <p className="text-muted-foreground">Interviews Completed</p>
             </div>
+
             <div>
-              <p className="text-2xl font-bold text-green-600">87%</p>
-              <p className="text-muted-foreground">Avg Feedback Score</p>
+              <p className="text-2xl font-bold text-green-600">50+</p>
+              <p className="text-muted-foreground">Interviews to Master a Role</p>
             </div>
+
             <div>
-              <p className="text-2xl font-bold text-yellow-500">12 hrs</p>
-              <p className="text-muted-foreground">Practice Time</p>
+              <p className="text-2xl font-bold text-yellow-400">18 hrs</p>
+              <p className="text-muted-foreground">Avg. Time to Build Confidence</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-indigo-500">3</p>
-              <p className="text-muted-foreground">Domains Explored</p>
+
+           <div>
+            <p className="text-2xl font-bold text-indigo-500">5+</p>
+            <p className="text-muted-foreground">Domains To Train with FOA</p>
             </div>
+
           </div>
         </CardContent>
       </Card>
@@ -94,7 +100,7 @@ export default function DashBoard() {
       </div>
 
       <div className="text-sm text-muted-foreground text-center pt-6">
-         Practice regularly.  Review summaries. Become unstoppable.
+        Practice regularly. Review summaries. Become unstoppable.
       </div>
     </div>
   );

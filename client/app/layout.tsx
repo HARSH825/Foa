@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/Theme";
 import Header from "@/components/Header";
 import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
-
+import Footer from "@/components/Footer";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -42,6 +42,7 @@ export default function RootLayout({
 
         >
           <Toaster/>{children}<Toaster/>
+          <Footer/>
         </ThemeProvider>
         </AuthProvider>
       </body>
