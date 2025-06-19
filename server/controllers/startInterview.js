@@ -44,12 +44,10 @@ const startInterview = async (req, res) => {
     const llmResponse = await getResponse(chatHistory, interviewID, userMessage);
     console.log("LLM response:", llmResponse);
 
-    // Save AI message asynchronously
     saveAiMessageAsync(interviewID, llmResponse).catch(dbError => {
       console.error("Database save error for AI message:", dbError);
     });
 
-    // Wait for user message to be saved
     saveUserPromise.catch(dbError => {
       console.error("Database save error for user message:", dbError);
     });
