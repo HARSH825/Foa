@@ -7,7 +7,6 @@ import multer, { memoryStorage } from "multer";
 import startInterview from "../controllers/startInterview.js";
 import getSummary from "../controllers/getSummary.js"
 import { getPastInterview } from "../controllers/getPastInterview.js";
-import startInterviewStream from "../controllers/startInterviewStream.js";
 
 const upload = multer({
     storage: multer.memoryStorage(), 
