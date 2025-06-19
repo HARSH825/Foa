@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Interview } from '@/types/form';
+import SummarySkeleton from '@/components/Skeletons/SummarySkeleton';
 
 const PastInterviewPage = () => {
   const { userData } = useAuth();
@@ -50,7 +51,7 @@ const PastInterviewPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-foreground">Loading...</div>
+      <SummarySkeleton/>
     );
   }
 

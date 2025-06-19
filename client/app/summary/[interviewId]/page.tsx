@@ -3,12 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
-
-type SummaryData = {
-  strengths: { point: string; example: string }[];
-  weaknesses: { issue: string; advice: string }[];
-  recommendations: string[];
-};
+import { SummaryData } from "@/types/form";
+import SummarySkeleton from "@/components/Skeletons/SummarySkeleton";
 
 export default function SummaryPage() {
   const { interviewId } = useParams();
@@ -48,11 +44,11 @@ export default function SummaryPage() {
   }, [interviewId, router]);
 
   if (loading) {
-    return <div className="text-center text-foreground py-10">Generating summary...</div>;
+    return <SummarySkeleton/>;
   }
 
   if (!summaryData) {
-    return <div className="text-center text-red-500 py-10">Failed to generate or load summary.</div>;
+    return <div className="text-center text-red-500 py-10">Failed to generate or load summary.Summary is available only when you have taken Interview/s .</div>;
   }
 
   return (

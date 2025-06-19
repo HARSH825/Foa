@@ -38,3 +38,8 @@ export interface Interview {
   createdAt: string;
   interviewChats: { id: string }[];
 }
+export type SummaryData = {
+  strengths: { point: string; example: string }[];
+  weaknesses: { issue: string; advice: string }[];
+  recommendations: string[];
+};
