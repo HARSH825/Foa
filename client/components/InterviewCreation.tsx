@@ -301,7 +301,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
       <button
         onClick={handleSubmit}
         disabled={isLoading}
-        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+        className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer"
       >
         {isLoading ? 'Creating Interview...' : 'Create Interview'}
       </button>
