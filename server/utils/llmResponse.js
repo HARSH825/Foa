@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
-
+import prisma from '../config/prismaClient.js';
 dotenv.config();
 
 if (!process.env.GEMINI_API_KEY) {
@@ -9,11 +9,18 @@ if (!process.env.GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         
-const generateInterviewResponse = async (chatHistory, interviewChat, userMessage) => {
+const generateInterviewResponse = async (chatHistory, interviewID, userMessage) => {
     try {
+
+    const interviewContext = await prisma.interview.findUnique({
+        where:{
+            id:interviewID
+        }
+    });
+        // can also add logic to get user name , since getting userid from interview context . 
         const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
         
-        const prompt = createSystemPrompt(chatHistory, interviewChat, userMessage);
+        const prompt = createSystemPrompt(chatHistory, interviewContext, userMessage);
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -27,7 +34,7 @@ const generateInterviewResponse = async (chatHistory, interviewChat, userMessage
     }
 };
 
-const createSystemPrompt = (chatHistory, interviewChat, userMessage) => {
+const createSystemPrompt = (chatHistory, interviewContext, userMessage) => {
     const {
         resumeContent,
         position,
@@ -36,9 +43,9 @@ const createSystemPrompt = (chatHistory, interviewChat, userMessage) => {
         specialization,
         company,
         style
-    } = interviewChat;
+    } = interviewContext;
 
-    return `You are a professional AI interviewer conducting a ${type} interview for the position of ${position} at ${company}. Your interviewing style is ${style}.
+    return `You are a professional AI interviewer whose name is FOA conducting a ${type} interview for the position of ${position} at ${company}. Your interviewing style is ${style}.
 
 CANDIDATE PROFILE:
 - Position Applied: ${position}
@@ -47,7 +54,7 @@ CANDIDATE PROFILE:
 - Company: ${company}
 - Interview Type: ${type}
 
-RESUME CONTEXT:
+RESUME CONTEXT of the candidate , make sure to ask relevant questions on resume such as projects , achievements ,and anything else relevant in the resume of the candidate :
 ${resumeContent || 'Resume content not provided'}
 
 CONVERSATION HISTORY:
