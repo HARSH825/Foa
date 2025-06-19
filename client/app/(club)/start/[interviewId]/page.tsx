@@ -9,11 +9,17 @@ export default function StartInterview() {
   const [chat, setChat] = useState<{ sender: string; message: string }[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const audioChunks = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const speechSynthesis = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      speechSynthesis.current = window.speechSynthesis;
+    }
+
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
       const recorder = new MediaRecorder(stream);
       recorder.ondataavailable = (e) => audioChunks.current.push(e.data);
@@ -47,8 +53,50 @@ export default function StartInterview() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const speakText = (text: string) => {
+    if (!speechSynthesis.current) {
+      console.error("Speech synthesis not supported");
+      return;
+    }
+
+    speechSynthesis.current.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.3;
+    utterance.pitch = 1.5;
+    utterance.volume = 1.0;
+
+    const voices = speechSynthesis.current.getVoices();
+    const preferredVoice = voices.find(voice =>
+      voice.name.includes('English') &&
+      (voice.name.includes('Female') || voice.name.includes('Male'))
+    ) || voices.find(voice => voice.default);
+
+    
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = (event) => {
+      console.error("Speech synthesis error:", event);
+      setIsSpeaking(false);
+    };
+
+    speechSynthesis.current.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if (speechSynthesis.current) {
+      speechSynthesis.current.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
   const startRecording = () => {
     if (!mediaRecorder) return;
+    stopSpeaking();
     audioChunks.current = [];
     mediaRecorder.start();
     setIsRecording(true);
@@ -72,29 +120,22 @@ export default function StartInterview() {
     try {
       const res = await fetch(`http://localhost:4000/api/v1/interview/start/${interviewId}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        if (data.speech && data.mimeType) {
-          try {
-            const audio = new Audio(`data:${data.mimeType};base64,${data.speech}`);
-            await audio.play();
-          } catch (err) {
-            console.error("Audio playback error:", err);
-          }
-        }
-
         setChat(prev => [
           ...prev,
           { sender: "user", message: data.userMessage },
           { sender: "AI", message: data.response },
         ]);
+
+        setTimeout(() => {
+          speakText(data.response);
+        }, 500);
       } else {
         alert(data.message || "Error during interview.");
       }
@@ -116,7 +157,7 @@ export default function StartInterview() {
         </div>
 
         <div className="bg-black border border-white/10 rounded-3xl overflow-hidden">
-          <div className="h-96 overflow-y-auto p-8 space-y-6">
+          <div className="h-[520px] overflow-y-auto p-8 space-y-6">
             {chat.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <p className="text-gray-500">Press record to begin your interview</p>
@@ -169,11 +210,54 @@ export default function StartInterview() {
             </div>
           )}
 
+         {isSpeaking && (
+  <div className="relative px-6 py-3 flex items-center justify-center overflow-hidden rounded-b-3xl bg-gradient-to-r from-purple-500 via-blue-600 to-indigo-500">
+    <svg
+      className="absolute bottom-0 left-0 w-full h-full opacity-10"
+      viewBox="0 0 1440 320"
+      preserveAspectRatio="none"
+    >
+      <path
+        fill="white"
+        fillOpacity="1"
+        d="M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
+      >
+        <animate
+          attributeName="d"
+          dur="6s"
+          repeatCount="indefinite"
+          values="
+            M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L0,320Z;
+            M0,140L80,160C160,180,320,180,480,160C640,140,800,100,960,80C1120,60,1280,80,1440,120L1440,320L0,320Z;
+            M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L0,320Z
+          "
+        />
+      </path>
+    </svg>
+
+        <div className="relative z-10 flex items-center space-x-3 text-white">
+          <div className="flex space-x-1">
+            <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+            <div className="w-2 h-2 bg-white rounded-full animate-ping delay-100" />
+            <div className="w-2 h-2 bg-white rounded-full animate-ping delay-200" />
+          </div>
+          <span className="text-sm font-medium">AI Speaking</span>
+          <button
+            onClick={stopSpeaking}
+            className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm transition-all"
+          >
+            Stop
+          </button>
+        </div>
+      </div>
+    )}
+
+
           <div className="bg-gray-800 p-6 flex justify-center space-x-4">
             {!isRecording ? (
               <button
                 onClick={startRecording}
-                disabled={isProcessing}
+                disabled={isProcessing || isSpeaking}
                 className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-8 py-4 rounded-xl font-medium transition-all"
               >
                 Start Recording
@@ -187,9 +271,21 @@ export default function StartInterview() {
               </button>
             )}
 
+            {isSpeaking && (
+              <button
+                onClick={stopSpeaking}
+                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-xl font-medium"
+              >
+                Stop Speaking
+              </button>
+            )}
+
             {chat.length > 0 && (
               <button
-                onClick={() => setChat([])}
+                onClick={() => {
+                  setChat([]);
+                  stopSpeaking();
+                }}
                 className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-xl font-medium"
               >
                 Clear Chat
@@ -205,6 +301,7 @@ export default function StartInterview() {
             <li>• Take your time to think before answering</li>
             <li>• Ask for clarification if needed</li>
             <li>• Be specific with your examples</li>
+            <li>• Wait for the AI to finish speaking before recording</li>
           </ul>
         </div>
       </div>
