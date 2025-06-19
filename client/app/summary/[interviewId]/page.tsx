@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { SummaryData } from "@/types/form";
 import SummarySkeleton from "@/components/Skeletons/SummarySkeleton";
+import { BE_URL } from "@/config";
 
 export default function SummaryPage() {
   const { interviewId } = useParams();
@@ -23,7 +24,7 @@ export default function SummaryPage() {
       }
 
       try {
-        const res = await fetch(`http://localhost:4000/api/v1/interview/summary/${interviewId}`, {
+        const res = await fetch(`${BE_URL}/api/v1/interview/summary/${interviewId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

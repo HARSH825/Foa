@@ -3,6 +3,7 @@ import { useAuth } from "../app/context/AuthContext";
 import { Button } from "./ui/button";
 import { ModeToggle } from "./Toggle";
 import Image from "next/image";
+import { BE_URL } from "@/config";
 
 const Header = () => {
   const { userData, logout } = useAuth();
@@ -20,13 +21,13 @@ const Header = () => {
             <Button variant="outline" onClick={logout}>Signout</Button>
           </>
         ) : (
-          <Button onClick={() => window.location.href = 'http://localhost:4000/auth/google'}>
+          <Button onClick={() => window.location.href = `${BE_URL}/auth/google`}>
             Signin
           </Button>
         )}
         <ModeToggle />
       </div>
-    </div>
+    </div >
   );
 };
 

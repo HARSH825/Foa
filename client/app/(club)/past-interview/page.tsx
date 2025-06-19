@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { Interview } from '@/types/form';
 import SummarySkeleton from '@/components/Skeletons/SummarySkeleton';
 import { Button } from '@/components/ui/button';
+import { BE_URL } from '@/config';
 
 const ITEMS_PER_PAGE = 5;
-
 const PastInterviewPage = () => {
   const { userData } = useAuth();
   const router = useRouter();
@@ -25,7 +25,7 @@ const PastInterviewPage = () => {
       }
 
       try {
-        const res = await fetch('http://localhost:4000/api/v1/interview/pastInterview', {
+        const res = await fetch(`${BE_URL}/api/v1/interview/pastInterview`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

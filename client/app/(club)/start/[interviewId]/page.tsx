@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { BE_URL } from "@/config";
 
 export default function StartInterview() {
   const { interviewId } = useParams();
@@ -15,6 +16,7 @@ export default function StartInterview() {
   const chatContainerRef = useRef<HTMLDivElement>(null); // Reference to chat container
   const chatEndRef = useRef<HTMLDivElement>(null);
   const speechSynthesis = useRef<SpeechSynthesis | null>(null);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -131,7 +133,7 @@ export default function StartInterview() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/interview/start/${interviewId}`, {
+      const res = await fetch(`${BE_URL}/api/v1/interview/start/${interviewId}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

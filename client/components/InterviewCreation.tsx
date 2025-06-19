@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { FormDataType, InterviewData, InterviewCreationFormProps } from '@/types/form';
 import { InterviewCard } from './InterviewCard';
 import { Card } from '@/components/ui/card';
-
+import { BE_URL } from '@/config';
 const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
   onSuccess,
   onError,
@@ -128,7 +128,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
         if (value) body.append(key, value);
       });
 
-      const res = await fetch('http://localhost:4000/api/v1/interview/create', {
+      const res = await fetch(`${BE_URL}/api/v1/interview/create`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body,

@@ -2,8 +2,7 @@
 import { useContext, useEffect, useState, createContext } from "react";
 
 import axios from 'axios';
-
-//stps : create context , give name , fetch detsils, set context , export context .
+import { BE_URL } from "@/config";
 
 interface User {
   id: string
@@ -34,7 +33,7 @@ export const AuthProvider =  ({children}:{children : React.ReactNode})=>{
     let token = localStorage.getItem("token");
     if (!token){console.log("No token in localsotrage"); return;}
     try {
-      const response = await axios.get("http://localhost:4000/auth/profile", {
+      const response = await axios.get(`${BE_URL}/auth/profile`, {
         headers: {
           'Authorization':`Bearer ${token}`
         },

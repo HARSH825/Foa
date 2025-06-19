@@ -2,6 +2,8 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 
+import { BE_URL } from '@/config';
+console.log("be url : "+BE_URL);
 const Hero = () => {
   return (
     <section className="relative w-full min-h-screen overflow-hidden bg-black text-white">
@@ -42,7 +44,7 @@ const Hero = () => {
            <Button 
             size="lg"
             onClick={() => {
-                window.location.href = 'http://localhost:4000/auth/google';
+                window.location.href = `${BE_URL}/auth/google`;
             }}
             className="cursor-pointer "
             >

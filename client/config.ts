@@ -1,0 +1,1 @@
+export const BE_URL = "http://13.60.255.66:4000"
