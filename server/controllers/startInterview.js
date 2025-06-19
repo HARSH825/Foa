@@ -2,6 +2,7 @@ import prisma from "../config/prismaClient.js";
 import getResponse from "../utils/llmResponse.js";
 import saveToDb from "../utils/saveToDB.js";
 import transcribeMessage from "../utils/transcribe.js";
+import tts from "../utils/tts.js";
 
 const startInterview = async (req, res) => {
   const interviewID = req.params.interviewId;
@@ -39,14 +40,22 @@ const startInterview = async (req, res) => {
       .map(chat => `${chat.sender === "user" ? "USER" : "AI"} : ${chat.message}`)
       .join("\n");
 
-    const llmResponse = await getResponse(chatHistory, interviewChat, userMessage);
+    console.log("Interview chat history:", chatHistory);
+
+    const llmResponse = await getResponse(chatHistory, interviewID, userMessage);
     console.log("LLM response:", llmResponse);
 
     await saveToDb(interviewID, userMessage, llmResponse);
 
-    // Optionally: Add TTS logic here to convert `llmResponse` to audio
+    const { base64Audio, mimeType } = await tts(llmResponse);
 
-    return res.json({ response: llmResponse , userMessage:userMessage});
+    return res.json({
+      userMessage,
+      response: llmResponse,
+      speech: base64Audio,
+      mimeType: mimeType || "audio/wav",
+    });
+
   } catch (error) {
     console.error("Error in startInterview:", error);
     return res.status(500).json({ message: "Internal server error" });
