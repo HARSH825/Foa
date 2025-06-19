@@ -12,6 +12,7 @@ export default function StartInterview() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioChunks = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null); // Reference to chat container
   const chatEndRef = useRef<HTMLDivElement>(null);
   const speechSynthesis = useRef<SpeechSynthesis | null>(null);
 
@@ -29,8 +30,20 @@ export default function StartInterview() {
   }, []);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current && chatEndRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [chat]);
+
+  useEffect(() => {
+    if (isProcessing && chatContainerRef.current) {
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 100); 
+    }
+  }, [isProcessing]);
 
   useEffect(() => {
     if (isRecording) {
@@ -157,7 +170,10 @@ export default function StartInterview() {
         </div>
 
         <div className="bg-black border border-white/10 rounded-3xl overflow-hidden">
-          <div className="h-[520px] overflow-y-auto p-8 space-y-6">
+          <div 
+            ref={chatContainerRef}
+            className="h-[520px] overflow-y-auto p-8 space-y-6"
+          >
             {chat.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <p className="text-gray-500">Press record to begin your interview</p>
