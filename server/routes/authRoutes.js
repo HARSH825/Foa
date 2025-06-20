@@ -13,7 +13,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "/signin",
+    failureRedirect: "/",
     session: false, 
   }),
   (req, res) => {
@@ -34,7 +34,7 @@ router.get(
         { expiresIn: "3d" }
       );
 
-      res.redirect(`http://localhost:3000/home?token=${token}`);
+      res.redirect(`https://app.foa.run.place/home?token=${token}`);
     } catch (err) {
       console.error(" Error in Google callback handler:", err);
       res.status(500).json({ error: "Internal server error during auth" });
