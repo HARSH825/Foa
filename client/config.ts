@@ -1,1 +1,1 @@
-export const BE_URL = "http://localhost:4000"
+export const BE_URL = "https://foa.run.place"
