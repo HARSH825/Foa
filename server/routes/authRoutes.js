@@ -1,42 +1,68 @@
 import { Router } from "express";
 import passport from "../auth/gAuth.js";
-const router = Router();
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import prisma from "../config/prismaClient.js";
-router.get('/google', 
-    passport.authenticate('google', { scope: ['profile', 'email'] })
+
+const router = Router();
+
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
-router.get('/google/callback',
-    passport.authenticate('google', { failureRedirect: '/signin' , session: false }),
-    (req, res) => {
-        // success, redirect home.
-        const user = req.user;
-        const token= jwt.sign({id:user.id,email:user.emails?.[0].value}, process.env.JWT_SECRET, {expiresIn: '3d'});
-        // console.log("User authenticated successfully:", user);
-        // console.log("Token generated successfully:", token);
-        res.redirect('http://localhost:3000/home?token=' + token); 
-        
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/signin",
+    session: false, 
+  }),
+  (req, res) => {
+    try {
+      const user = req.user;
+
+      if (!user || !user.id || !user.email) {
+        console.error(" Missing user data in Google callback:", user);
+        return res.status(400).json({ error: "Incomplete user data" });
+      }
+
+      const token = jwt.sign(
+        {
+          id: user.id,
+          email: user.email, 
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "3d" }
+      );
+
+      res.redirect(`http://localhost:3000/home?token=${token}`);
+    } catch (err) {
+      console.error(" Error in Google callback handler:", err);
+      res.status(500).json({ error: "Internal server error during auth" });
     }
+  }
 );
 
-router.get('/logout', (req, res) => {  
-    req.logout((err) => {
-        if (err) {
-            return res.status(500).send('Logout failed');
-        }
-        res.redirect('/signin');
-    });
+router.get("/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      console.error(" Logout failed:", err);
+      return res.status(500).send("Logout failed");
+    }
+    res.redirect("/signin");
+  });
 });
 
-router.get('/profile', async (req, res) => {
+router.get("/profile", async (req, res) => {
   const authHeader = req.headers.authorization;
-    // console.log("auth header : "+authHeader);
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ msg: "Token required or improperly formatted" });
+    console.warn(" Missing or malformed Authorization header");
+    return res
+      .status(401)
+      .json({ msg: "Token required or improperly formatted" });
   }
 
-  const token = authHeader.split(" ")[1]; 
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -48,20 +74,20 @@ router.get('/profile', async (req, res) => {
         name: true,
         email: true,
         picture: true,
-        interviews:{}
+        interviews: true, 
       },
     });
 
     if (!user) {
+      console.warn(" Token valid but user not found:", decoded.id);
       return res.status(404).json({ error: "User not found" });
     }
-    // console.log("User is : "+user);
+
     res.json(user);
   } catch (err) {
-    console.error("Failed to fetch user profile:", err);
+    console.error(" Token verification failed or DB error:", err);
     return res.status(403).json({ msg: "Invalid or expired token" });
   }
 });
-
 
 export default router;
