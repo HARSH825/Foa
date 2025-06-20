@@ -37,3 +37,7 @@ Now working with the dashbord after login .
 
 all don , need to make sure company and other details pass to llm . 
 llm tts remaining .
+
+
+DEPLOYED BOTH FE BE ON EC2 , NEED TO USE CLOUDFRONT FOR FE LATER.
+NEED TO TEST CONCURRENT USERS CAPACTIT NUMBER ,
