@@ -204,7 +204,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
           label: 'Interview Type',
           name: 'type',
           type: 'select',
-          options: ['Technical/Dev', 'Behavioral', 'System Design','Leetcode','General', 'HR'],
+          options: ['Technical', 'Behavioral', 'System Design', 'General', 'HR'],
         },
         {
           label: 'Position',
@@ -239,7 +239,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
           label: 'Interview Style',
           name: 'style',
           type: 'select',
-          options: ['friendly', 'formal', 'challenging'],
+          options: ['friendly', 'formal', 'challenging', 'leetcode', 'system-design'],
         },
         {
           label: 'Duration',
