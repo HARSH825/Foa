@@ -97,7 +97,20 @@ export default function StartInterview() {
     }
 
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-      const recorder = new MediaRecorder(stream);
+      const options = {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 16000, 
+      };
+      
+      let recorder;
+      if (MediaRecorder.isTypeSupported(options.mimeType)) {
+        recorder = new MediaRecorder(stream, options);
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        recorder = new MediaRecorder(stream, { mimeType: 'audio/webm', audioBitsPerSecond: 16000 });
+      } else {
+        recorder = new MediaRecorder(stream);
+      }
+      
       recorder.ondataavailable = (e) => audioChunks.current.push(e.data);
       recorder.onstop = handleStop;
       setMediaRecorder(recorder);
@@ -248,7 +261,7 @@ export default function StartInterview() {
       clearTimeout(autoRecordTimeoutRef.current);
     }
     audioChunks.current = [];
-    mediaRecorder.start();
+    mediaRecorder.start(1000); 
     setIsRecording(true);
   };
 
@@ -262,36 +275,62 @@ export default function StartInterview() {
 
   const handleStop = async () => {
     const blob = new Blob(audioChunks.current, { type: "audio/webm" });
+    
+    const maxSize = 10 * 1024 * 1024; 
+    console.log(`Audio file size: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+    
+    if (blob.size > maxSize) {
+      alert(`Recording too long (${(blob.size / 1024 / 1024).toFixed(2)}MB). Please keep responses shorter.`);
+      setIsProcessing(false);
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("userMessage", blob);
+    formData.append("userMessage", blob, "audio.webm");
 
     const token = localStorage.getItem("token");
 
     try {
       const res = await fetch(`${BE_URL}/api/v1/interview/start/${interviewId}`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Server response:', res.status, errorText);
+        
+        if (res.status === 413) {
+          alert("Recording is too large. Please keep your responses shorter (under 2 minutes).");
+        } else {
+          alert(`Server error (${res.status}): ${errorText}`);
+        }
+        return;
+      }
+
       const data = await res.json();
 
-      if (res.ok) {
-        setChat(prev => [
-          ...prev,
-          { sender: "user", message: data.userMessage },
-          { sender: "AI", message: data.response },
-        ]);
+      setChat(prev => [
+        ...prev,
+        { sender: "user", message: data.userMessage },
+        { sender: "AI", message: data.response },
+      ]);
 
-        setTimeout(() => {
-          speakText(data.response);
-        }, 500);
-      } else {
-        alert(data.message || "Error during interview.");
-      }
+      setTimeout(() => {
+        speakText(data.response);
+      }, 500);
+
     } catch (error) {
       console.error("Fetch error:", error);
-      alert("Something went wrong.");
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        alert("Network error. Please check your connection and try again.");
+      } else {
+        alert("Something went wrong. Please try again.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -419,11 +458,15 @@ export default function StartInterview() {
                   <div className="text-xs bg-white/20 px-2 py-1 rounded">
                     Audio: {Math.round(audioLevel)}
                   </div>
-                  <div className="text-xs">Press Enter or stay silent to stop</div>
+                  <div className="text-xs">
+                    {recordingTime > 120 ? " Long recording - consider stopping" : "Enter or stay silent to stop"}
+                  </div>
                 </div>
               )}
               {!silenceDetectionEnabled && (
-                <div className="text-xs">Press Enter to stop</div>
+                <div className="text-xs">
+                  {recordingTime > 120 ? " Long recording - press Enter to stop" : "Press Enter to stop"}
+                </div>
               )}
             </div>
           )}
@@ -523,6 +566,7 @@ export default function StartInterview() {
           <h3 className="font-medium mb-2">💡 Interview Tips</h3>
           <ul className="text-gray-400 text-sm space-y-1">
             <li>• Speak clearly and at a moderate pace</li>
+            <li>• Keep responses under 2 minutes to avoid file size issues</li>
             <li>• Take your time to think before answering</li>
             <li>• Ask for clarification if needed</li>
             <li>• Be specific with your examples</li>
