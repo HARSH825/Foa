@@ -9,8 +9,6 @@ export const InterviewCard: React.FC<{ interview: InterviewData; onStartIntervie
       friendly: 'bg-green-600',
       formal: 'bg-blue-600',
       challenging: 'bg-red-600',
-      leetcode: 'bg-purple-600',
-      'system-design': 'bg-orange-600'
     };
     return colors[style as keyof typeof colors] || 'bg-gray-600';
   };
