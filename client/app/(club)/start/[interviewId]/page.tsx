@@ -11,12 +11,13 @@ export default function StartInterview() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [autoRecordEnabled, setAutoRecordEnabled] = useState(true); 
   const audioChunks = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null); // Reference to chat container
+  const chatContainerRef = useRef<HTMLDivElement>(null); 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const speechSynthesis = useRef<SpeechSynthesis | null>(null);
-
+  const autoRecordTimeoutRef = useRef<NodeJS.Timeout | null>(null); 
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -62,6 +63,26 @@ export default function StartInterview() {
     };
   }, [isRecording]);
 
+  useEffect(() => {
+    if (!isSpeaking && autoRecordEnabled && chat.length > 0 && !isRecording && !isProcessing) {
+      if (autoRecordTimeoutRef.current) {
+        clearTimeout(autoRecordTimeoutRef.current);
+      }
+      
+      autoRecordTimeoutRef.current = setTimeout(() => {
+        if (!isSpeaking && !isRecording && !isProcessing && mediaRecorder) {
+          startRecording();
+        }
+      }, 1500);
+    }
+
+    return () => {
+      if (autoRecordTimeoutRef.current) {
+        clearTimeout(autoRecordTimeoutRef.current);
+      }
+    };
+  }, [isSpeaking, autoRecordEnabled, chat.length, isRecording, isProcessing, mediaRecorder]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -92,7 +113,12 @@ export default function StartInterview() {
       utterance.voice = preferredVoice;
     }
 
-    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      if (autoRecordTimeoutRef.current) {
+        clearTimeout(autoRecordTimeoutRef.current);
+      }
+    };
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = (event) => {
       console.error("Speech synthesis error:", event);
@@ -112,6 +138,9 @@ export default function StartInterview() {
   const startRecording = () => {
     if (!mediaRecorder) return;
     stopSpeaking();
+    if (autoRecordTimeoutRef.current) {
+      clearTimeout(autoRecordTimeoutRef.current);
+    }
     audioChunks.current = [];
     mediaRecorder.start();
     setIsRecording(true);
@@ -171,6 +200,27 @@ export default function StartInterview() {
           <p className="text-gray-500 text-sm">Interview ID: {interviewId}</p>
         </div>
 
+        <div className="flex justify-center">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3">
+            <span className="text-sm font-medium">Auto Recording:</span>
+            <button
+              onClick={() => setAutoRecordEnabled(!autoRecordEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                autoRecordEnabled ? 'bg-green-600' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  autoRecordEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="text-xs text-gray-400">
+              {autoRecordEnabled ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
+        </div>
+
         <div className="bg-black border border-white/10 rounded-3xl overflow-hidden">
           <div 
             ref={chatContainerRef}
@@ -178,7 +228,14 @@ export default function StartInterview() {
           >
             {chat.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500">Press record to begin your interview</p>
+                <div className="text-center space-y-2">
+                  <p className="text-gray-500">Press record to begin your interview</p>
+                  {autoRecordEnabled && (
+                    <p className="text-gray-600 text-xs">
+                      Auto recording is enabled - recording will start automatically after AI speaks
+                    </p>
+                  )}
+                </div>
               </div>
             ) : (
               chat.map((c, i) => (
@@ -222,7 +279,9 @@ export default function StartInterview() {
             <div className="bg-red-600 px-6 py-3 flex items-center justify-center space-x-3">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-                <span className="font-medium">Recording</span>
+                <span className="font-medium">
+                  {autoRecordEnabled && chat.length > 0 ? "Auto Recording" : "Recording"}
+                </span>
               </div>
               <div className="font-mono text-lg">{formatTime(recordingTime)}</div>
             </div>
@@ -260,6 +319,11 @@ export default function StartInterview() {
             <div className="w-2 h-2 bg-white rounded-full animate-ping delay-200" />
           </div>
           <span className="text-sm font-medium">AI Speaking</span>
+          {autoRecordEnabled && (
+            <span className="text-xs bg-white/20 px-2 py-1 rounded">
+              Will auto-record when finished
+            </span>
+          )}
           <button
             onClick={stopSpeaking}
             className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm transition-all"
@@ -270,7 +334,6 @@ export default function StartInterview() {
       </div>
     )}
 
-
           <div className="bg-gray-800 p-6 flex justify-center space-x-4">
             {!isRecording ? (
               <button
@@ -278,7 +341,7 @@ export default function StartInterview() {
                 disabled={isProcessing || isSpeaking}
                 className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-8 py-4 rounded-xl font-medium transition-all"
               >
-                Start Recording
+                {autoRecordEnabled && chat.length > 0 ? "Manual Record" : "Start Recording"}
               </button>
             ) : (
               <button
@@ -303,6 +366,9 @@ export default function StartInterview() {
                 onClick={() => {
                   setChat([]);
                   stopSpeaking();
+                  if (autoRecordTimeoutRef.current) {
+                    clearTimeout(autoRecordTimeoutRef.current);
+                  }
                 }}
                 className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-xl font-medium"
               >
@@ -319,7 +385,8 @@ export default function StartInterview() {
             <li>• Take your time to think before answering</li>
             <li>• Ask for clarification if needed</li>
             <li>• Be specific with your examples</li>
-            <li>• Wait for the AI to finish speaking before recording</li>
+            <li>• {autoRecordEnabled ? "Recording will start automatically after AI finishes speaking" : "Click 'Start Recording' when ready to respond"}</li>
+            <li>• Toggle auto-recording on/off using the switch above</li>
           </ul>
         </div>
       </div>
