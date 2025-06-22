@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { BE_URL } from "@/config";
 
 export default function StartInterview() {
   const { interviewId } = useParams();
+  const router = useRouter();
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [chat, setChat] = useState<{ sender: string; message: string }[]>([]);
@@ -73,6 +74,56 @@ export default function StartInterview() {
     }
   };
 
+  const cleanupServices = () => {
+    // Stop recording if active
+    if (isRecording && mediaRecorder) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+
+    // Stop speech synthesis
+    if (speechSynthesis.current) {
+      speechSynthesis.current.cancel();
+      setIsSpeaking(false);
+    }
+
+    // Clear all timeouts
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    if (autoRecordTimeoutRef.current) {
+      clearTimeout(autoRecordTimeoutRef.current);
+    }
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    // Close audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+
+    // Stop media stream tracks
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+
+    // Reset states
+    setIsProcessing(false);
+    setRecordingTime(0);
+    setAudioLevel(0);
+  };
+
+  const endInterview = () => {
+    if (confirm("Are you sure you want to end this interview? This will stop all recording and redirect you to past interviews.")) {
+      cleanupServices();
+      router.push('/past-interviews');
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey) {
@@ -119,15 +170,7 @@ export default function StartInterview() {
     });
 
     return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
+      cleanupServices();
     };
   }, []);
 
@@ -383,6 +426,14 @@ export default function StartInterview() {
               {silenceDetectionEnabled ? 'Enabled' : 'Disabled'}
             </span>
           </div>
+
+          <button
+            onClick={endInterview}
+            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-medium transition-all flex items-center space-x-2"
+          >
+            <span>🚪</span>
+            <span>END INTERVIEW</span>
+          </button>
         </div>
 
         <div className="bg-black border border-white/10 rounded-3xl overflow-hidden">
@@ -454,13 +505,8 @@ export default function StartInterview() {
               </div>
               <div className="font-mono text-lg">{formatTime(recordingTime)}</div>
               {silenceDetectionEnabled && (
-                <div className="flex items-center space-x-2">
-                  <div className="text-xs bg-white/20 px-2 py-1 rounded">
-                    Audio: {Math.round(audioLevel)}
-                  </div>
-                  <div className="text-xs">
-                    {recordingTime > 120 ? " Long recording - consider stopping" : "Enter or stay silent to stop"}
-                  </div>
+                <div className="text-xs">
+                  {recordingTime > 120 ? " Long recording - consider stopping" : "Enter or stay silent to stop"}
                 </div>
               )}
               {!silenceDetectionEnabled && (
@@ -574,6 +620,7 @@ export default function StartInterview() {
             <li>• {autoRecordEnabled ? "Recording will start automatically after AI finishes speaking" : "Click 'Start Recording' when ready to respond"}</li>
             <li>• {silenceDetectionEnabled ? "Recording will stop automatically after 3 seconds of silence" : "You need to manually stop recording"}</li>
             <li>• Toggle auto-recording and auto-stop using the switches above</li>
+            <li>• Click "END INTERVIEW" to finish and return to past interviews</li>
           </ul>
         </div>
       </div>
