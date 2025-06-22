@@ -75,19 +75,17 @@ export default function StartInterview() {
   };
 
   const cleanupServices = () => {
-    // Stop recording if active
     if (isRecording && mediaRecorder) {
       mediaRecorder.stop();
       setIsRecording(false);
     }
 
-    // Stop speech synthesis
     if (speechSynthesis.current) {
       speechSynthesis.current.cancel();
       setIsSpeaking(false);
     }
 
-    // Clear all timeouts
+    // Clear
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -101,26 +99,23 @@ export default function StartInterview() {
       cancelAnimationFrame(animationFrameRef.current);
     }
 
-    // Close audio context
     if (audioContextRef.current) {
       audioContextRef.current.close();
     }
 
-    // Stop media stream tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
 
-    // Reset states
     setIsProcessing(false);
     setRecordingTime(0);
     setAudioLevel(0);
   };
 
   const endInterview = () => {
-    if (confirm("Are you sure you want to end this interview? This will stop all recording and redirect you to past interviews.")) {
+    if (confirm("Are you sure you want to end this interview?.")) {
       cleanupServices();
-      router.push('/past-interviews');
+      router.push('/home');
     }
   };
 
@@ -347,7 +342,7 @@ export default function StartInterview() {
         console.error('Server response:', res.status, errorText);
         
         if (res.status === 413) {
-          alert("Recording is too large. Please keep your responses shorter (under 2 minutes).");
+          alert("Recording is too large. Please keep your responses shorter (under 5 minutes).");
         } else {
           alert(`Server error (${res.status}): ${errorText}`);
         }
@@ -431,7 +426,6 @@ export default function StartInterview() {
             onClick={endInterview}
             className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-medium transition-all flex items-center space-x-2"
           >
-            <span>🚪</span>
             <span>END INTERVIEW</span>
           </button>
         </div>
@@ -511,7 +505,7 @@ export default function StartInterview() {
               )}
               {!silenceDetectionEnabled && (
                 <div className="text-xs">
-                  {recordingTime > 120 ? " Long recording - press Enter to stop" : "Press Enter to stop"}
+                  {recordingTime > 180 ? " Long recording - press Enter to stop" : "Press Enter to stop"}
                 </div>
               )}
             </div>
