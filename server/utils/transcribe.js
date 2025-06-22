@@ -19,13 +19,15 @@ const transcribeMessage = async(userFile) => {
         });
 
         const response = await axios.post(
-            'https://api.elevenlabs.io/v1/speech-to-text',
+            'https://api.elevenlabs.io/v1/speech-to-text?language_code=eng&num_speakers=1',
             formData,
             {
                 headers: {
                     'xi-api-key': process.env.ELL_KEY,
-                    ...formData.getHeaders()
+                    ...formData.getHeaders(),
                 },
+                
+            
                 timeout: 30000
             }
         );
