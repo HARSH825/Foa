@@ -96,7 +96,7 @@ ${chatHistory}
 
 ---
 
- Now continue the interview naturally based on the latest response and conversation history, starting with the next question.Keep response concise and strictly below 100 words.
+ Now continue the interview naturally based on the latest response and conversation history, starting with the next question.Keep response concise and strictly below 100 words.Respond authentically—be direct or blunt when appropriate, not overly kind or lenient
 `;
 };
 
