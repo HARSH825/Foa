@@ -11,13 +11,85 @@ export default function StartInterview() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [autoRecordEnabled, setAutoRecordEnabled] = useState(true); 
+  const [autoRecordEnabled, setAutoRecordEnabled] = useState(true);
+  const [silenceDetectionEnabled, setSilenceDetectionEnabled] = useState(true);
+  const [audioLevel, setAudioLevel] = useState(0);
+  
   const audioChunks = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null); 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const speechSynthesis = useRef<SpeechSynthesis | null>(null);
-  const autoRecordTimeoutRef = useRef<NodeJS.Timeout | null>(null); 
+  const autoRecordTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  const monitorAudioLevel = () => {
+    if (!analyserRef.current) return;
+
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    analyserRef.current.getByteFrequencyData(dataArray);
+    
+    const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+    setAudioLevel(average);
+
+    if (isRecording && silenceDetectionEnabled) {
+      const silenceThreshold = 10; 
+      
+      if (average < silenceThreshold) {
+        if (!silenceTimeoutRef.current) {
+          silenceTimeoutRef.current = setTimeout(() => {
+            if (isRecording) {
+              stopRecording();
+            }
+          }, 4000); 
+        }
+      } else {
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current);
+          silenceTimeoutRef.current = null;
+        }
+      }
+    }
+
+    if (isRecording) {
+      animationFrameRef.current = requestAnimationFrame(monitorAudioLevel);
+    }
+  };
+
+  const setupAudioAnalysis = (stream: MediaStream) => {
+    try {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      source.connect(analyserRef.current);
+      streamRef.current = stream;
+    } catch (error) {
+      console.error("Error setting up audio analysis:", error);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey) {
+        event.preventDefault();
+        if (isRecording) {
+          stopRecording();
+        } else if (!isProcessing && !isSpeaking && mediaRecorder) {
+          startRecording();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isRecording, isProcessing, isSpeaking, mediaRecorder]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -29,7 +101,21 @@ export default function StartInterview() {
       recorder.ondataavailable = (e) => audioChunks.current.push(e.data);
       recorder.onstop = handleStop;
       setMediaRecorder(recorder);
+      
+      setupAudioAnalysis(stream);
     });
+
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -53,15 +139,35 @@ export default function StartInterview() {
       intervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
+      
+      if (silenceDetectionEnabled) {
+        monitorAudioLevel();
+      }
     } else {
       clearInterval(intervalRef.current!);
       setRecordingTime(0);
+      
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
     }
 
     return () => {
       clearInterval(intervalRef.current!);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+      }
     };
-  }, [isRecording]);
+  }, [isRecording, silenceDetectionEnabled]);
 
   useEffect(() => {
     if (!isSpeaking && autoRecordEnabled && chat.length > 0 && !isRecording && !isProcessing) {
@@ -200,7 +306,7 @@ export default function StartInterview() {
           <p className="text-gray-500 text-sm">Interview ID: {interviewId}</p>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center space-x-6">
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3">
             <span className="text-sm font-medium">Auto Recording:</span>
             <button
@@ -219,6 +325,25 @@ export default function StartInterview() {
               {autoRecordEnabled ? 'Enabled' : 'Disabled'}
             </span>
           </div>
+
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3">
+            <span className="text-sm font-medium">Auto Stop:</span>
+            <button
+              onClick={() => setSilenceDetectionEnabled(!silenceDetectionEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                silenceDetectionEnabled ? 'bg-blue-600' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  silenceDetectionEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="text-xs text-gray-400">
+              {silenceDetectionEnabled ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
         </div>
 
         <div className="bg-black border border-white/10 rounded-3xl overflow-hidden">
@@ -229,10 +354,15 @@ export default function StartInterview() {
             {chat.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-2">
-                  <p className="text-gray-500">Press record to begin your interview</p>
+                  <p className="text-gray-500">Press record or Enter to begin your interview</p>
                   {autoRecordEnabled && (
                     <p className="text-gray-600 text-xs">
                       Auto recording is enabled - recording will start automatically after AI speaks
+                    </p>
+                  )}
+                  {silenceDetectionEnabled && (
+                    <p className="text-gray-600 text-xs">
+                      Auto stop is enabled - recording will stop after 3 seconds of silence
                     </p>
                   )}
                 </div>
@@ -284,6 +414,17 @@ export default function StartInterview() {
                 </span>
               </div>
               <div className="font-mono text-lg">{formatTime(recordingTime)}</div>
+              {silenceDetectionEnabled && (
+                <div className="flex items-center space-x-2">
+                  <div className="text-xs bg-white/20 px-2 py-1 rounded">
+                    Audio: {Math.round(audioLevel)}
+                  </div>
+                  <div className="text-xs">Press Enter or stay silent to stop</div>
+                </div>
+              )}
+              {!silenceDetectionEnabled && (
+                <div className="text-xs">Press Enter to stop</div>
+              )}
             </div>
           )}
 
@@ -385,8 +526,10 @@ export default function StartInterview() {
             <li>• Take your time to think before answering</li>
             <li>• Ask for clarification if needed</li>
             <li>• Be specific with your examples</li>
+            <li>• Press <kbd className="bg-gray-700 px-1 rounded text-white">Enter</kbd> to start/stop recording</li>
             <li>• {autoRecordEnabled ? "Recording will start automatically after AI finishes speaking" : "Click 'Start Recording' when ready to respond"}</li>
-            <li>• Toggle auto-recording on/off using the switch above</li>
+            <li>• {silenceDetectionEnabled ? "Recording will stop automatically after 3 seconds of silence" : "You need to manually stop recording"}</li>
+            <li>• Toggle auto-recording and auto-stop using the switches above</li>
           </ul>
         </div>
       </div>
