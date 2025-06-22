@@ -7,8 +7,13 @@ import cors from 'cors'
 
 const app = express();
 dotenv.config();
+const allowedOrigins = ['https://app.foai.run.place'];
 
-app.use(cors());
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.use(passport.initialize());
