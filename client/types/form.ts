@@ -7,6 +7,8 @@ export interface FormDataType {
   style: string;
   duration: string;
   resume: File | null;
+  jd: File | null;
+  jdText: string;
 }
 
 export interface InterviewData {
@@ -19,9 +21,10 @@ export interface InterviewData {
   style: string;
   duration: string;
   createdAt: string;
+  hasJD?: boolean;
 }
 
-export  interface InterviewCreationFormProps {
+export interface InterviewCreationFormProps {
   onSuccess?: (interviewId: string) => void;
   onError?: (error: string) => void;
 }
@@ -38,6 +41,7 @@ export interface Interview {
   createdAt: string;
   interviewChats: { id: string }[];
 }
+
 export type SummaryData = {
   strengths: { point: string; example: string }[];
   weaknesses: { issue: string; advice: string }[];

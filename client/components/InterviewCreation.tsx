@@ -8,6 +8,7 @@ import { FormDataType, InterviewData, InterviewCreationFormProps } from '@/types
 import { InterviewCard } from './InterviewCard';
 import { Card } from '@/components/ui/card';
 import { BE_URL } from '@/config';
+
 const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
   onSuccess,
   onError,
@@ -16,6 +17,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [createdInterview, setCreatedInterview] = useState<InterviewData | null>(null);
+  const [jdInputType, setJdInputType] = useState<'file' | 'text' | 'none'>('none');
   const [formData, setFormData] = useState<FormDataType>({
     type: '',
     position: '',
@@ -25,10 +27,12 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
     style: '',
     duration: '',
     resume: null,
+    jd: null,
+    jdText: '',
   });
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -39,10 +43,12 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    const fieldName = e.target.name as 'resume' | 'jd';
+    
     if (file && file.type === 'application/pdf') {
       setFormData((prev) => ({
         ...prev,
-        resume: file,
+        [fieldName]: file,
       }));
     } else {
       const errorMsg = 'Please select a valid PDF file';
@@ -50,6 +56,18 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
       onError?.(errorMsg);
       e.target.value = '';
     }
+  };
+
+  const handleJdInputTypeChange = (type: 'file' | 'text' | 'none') => {
+    setJdInputType(type);
+    setFormData((prev) => ({
+      ...prev,
+      jd: null,
+      jdText: '',
+    }));
+    
+    const jdFileInput = document.getElementById('jd-upload') as HTMLInputElement | null;
+    if (jdFileInput) jdFileInput.value = '';
   };
 
   const resetForm = () => {
@@ -62,10 +80,15 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
       style: '',
       duration: '',
       resume: null,
+      jd: null,
+      jdText: '',
     });
+    setJdInputType('none');
 
-    const input = document.getElementById('resume-upload') as HTMLInputElement | null;
-    if (input) input.value = '';
+    const resumeInput = document.getElementById('resume-upload') as HTMLInputElement | null;
+    const jdInput = document.getElementById('jd-upload') as HTMLInputElement | null;
+    if (resumeInput) resumeInput.value = '';
+    if (jdInput) jdInput.value = '';
   };
 
   const handleStartInterview = () => {
@@ -112,6 +135,20 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
       return;
     }
 
+    if (jdInputType === 'file' && !formData.jd) {
+      const errorMsg = 'Please upload a JD file or switch to text input';
+      toast.error(errorMsg);
+      onError?.(errorMsg);
+      return;
+    }
+
+    if (jdInputType === 'text' && !formData.jdText.trim()) {
+      const errorMsg = 'Please enter JD text or switch to file upload';
+      toast.error(errorMsg);
+      onError?.(errorMsg);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -124,9 +161,22 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
       }
 
       const body = new FormData();
+      
       Object.entries(formData).forEach(([key, value]) => {
-        if (value) body.append(key, value);
+        if (key !== 'resume' && key !== 'jd' && value) {
+          body.append(key, value);
+        }
       });
+
+      if (formData.resume) {
+        body.append('resume', formData.resume);
+      }
+
+      if (jdInputType === 'file' && formData.jd) {
+        body.append('jd', formData.jd);
+      } else if (jdInputType === 'text' && formData.jdText.trim()) {
+        body.append('jdText', formData.jdText.trim());
+      }
 
       const res = await fetch(`${BE_URL}/api/v1/interview/create`, {
         method: 'POST',
@@ -135,7 +185,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
       });
 
       const result = await res.json();
-      const interviewId = result.interviewId;
+      const { interviewId, hasJD } = result;
 
       if (res.ok) {
         toast.success(result.message);
@@ -149,6 +199,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
           style: formData.style,
           duration: formData.duration,
           createdAt: new Date().toISOString(),
+          hasJD,
         };
         setCreatedInterview(interviewData);
         onSuccess?.(interviewId);
@@ -174,7 +225,9 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
           <h2 className="text-2xl font-bold text-foreground mb-2">
             Interview Created Successfully!
           </h2>
-          <p className="text-muted-foreground">Your interview is ready. Start it now.</p>
+          <p className="text-muted-foreground">
+            Your interview is ready. {createdInterview.hasJD && 'Job description has been included.'} Start it now.
+          </p>
         </div>
         <InterviewCard interview={createdInterview} onStartInterview={handleStartInterview} />
         <div className="mt-6 flex gap-4">
@@ -287,6 +340,7 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
         <input
           type="file"
           id="resume-upload"
+          name="resume"
           accept=".pdf"
           onChange={handleFileChange}
           className="w-full p-3 bg-background border border-border rounded-lg text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-black hover:file:bg-primary/90 file:cursor-pointer"
@@ -295,6 +349,87 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
           <p className="text-sm text-muted-foreground mt-1">
             Selected: {formData.resume.name}
           </p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Job Description (Optional)
+        </label>
+        <p className="text-xs text-muted-foreground mb-3">
+          Adding a job description will help tailor the interview questions to specific requirements.
+        </p>
+        
+        <div className="flex gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => handleJdInputTypeChange('none')}
+            className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+              jdInputType === 'none'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-foreground border-border hover:bg-muted'
+            }`}
+          >
+            Skip JD
+          </button>
+          <button
+            type="button"
+            onClick={() => handleJdInputTypeChange('file')}
+            className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+              jdInputType === 'file'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-foreground border-border hover:bg-muted'
+            }`}
+          >
+            Upload PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => handleJdInputTypeChange('text')}
+            className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+              jdInputType === 'text'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-foreground border-border hover:bg-muted'
+            }`}
+          >
+            Paste Text
+          </button>
+        </div>
+
+        {jdInputType === 'file' && (
+          <div>
+            <input
+              type="file"
+              id="jd-upload"
+              name="jd"
+              accept=".pdf"
+              onChange={handleFileChange}
+              className="w-full p-3 bg-background border border-border rounded-lg text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary file:text-black hover:file:bg-primary/90 file:cursor-pointer"
+            />
+            {formData.jd && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Selected: {formData.jd.name}
+              </p>
+            )}
+          </div>
+        )}
+
+        {jdInputType === 'text' && (
+          <div>
+            <textarea
+              name="jdText"
+              value={formData.jdText}
+              onChange={handleInputChange}
+              placeholder="Paste the job description here..."
+              rows={6}
+              className="w-full p-3 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
+            />
+            {formData.jdText && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {formData.jdText.length} characters
+              </p>
+            )}
+          </div>
         )}
       </div>
 
