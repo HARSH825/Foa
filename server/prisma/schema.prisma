@@ -1,3 +1,5 @@
+// Updated server/prisma/schema.prisma
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -36,10 +38,12 @@ model Interview {
   company        String?
   style          String? // e.g., 'Leetcode', 'System Design'
   resumeUrl      String?
+  resumeContent  String?
+  jdUrl          String? // Job Description URL (optional)
+  jdContent      String? // Job Description content (optional)
   duration       String // in minutes
   createdAt      DateTime        @default(now())
   InterviewChat  InterviewChat[]
-  resumeContent String?
 }
 
 model InterviewChat {

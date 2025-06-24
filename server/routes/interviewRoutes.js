@@ -20,6 +20,19 @@ const upload = multer({
     }
 });
 
+const uploadMultiple = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only PDF files are allowed!'), false);
+        }
+    }
+});
+
+//  audio files
 const upload2 = multer({
     storage: memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 }, 
@@ -33,9 +46,12 @@ const upload2 = multer({
     }
 });
 
+router.post('/create', uploadMultiple.fields([
+    { name: 'resume', maxCount: 1 },
+    { name: 'jd', maxCount: 1 }
+]), gAuthMiddleware, createInterview);
 
-router.post('/create',upload.single('resume'),gAuthMiddleware,createInterview);
-router.post('/start/:interviewId',upload2.single('userMessage'), gAuthMiddleware, startInterview); // need to pass interviewid in params .
+router.post('/start/:interviewId',upload2.single('userMessage'), gAuthMiddleware, startInterview);
 router.get('/summary/:interviewId' , gAuthMiddleware , getSummary);
 router.post('/pastInterview',gAuthMiddleware,getPastInterview);
 

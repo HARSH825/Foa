@@ -1,48 +1,84 @@
 import prisma from "../config/prismaClient.js";
 import uplodToCloudinary from "../utils/uploadFile.js";
 import downloadAndParseResume from "../utils/downloadParseResume.js";
+import parseJD from "../utils/parseJD.js";
 
 const createInterview = async (req, res) => {
-
     console.log("Creating interview...");
-    const userId = req.user.id ; 
-    const file = req.file;
-    const  { buffer , originalname } = file;
-    // console.log("File received:", originalname);
-    // console.log("Buffer size:", buffer.length);
-    const result = await uplodToCloudinary(buffer,originalname);
-    if(!result) {
-        return res.status(500).json({ message: 'Failed to upload file!' });
-    }
-    const resumeContent = await downloadAndParseResume(result);
-    // console.log("resume contnt  : "+ resumeContent);
+    const userId = req.user.id;
+    const files = req.files;
     
-    //will replace with zod validation later
-    const {type , position , experience , specialization, company , style ,duration} = req.body;
-    if(!type || !position || !experience || !specialization || !company || !style || !result || !duration) {
-        return res.status(400).json({ message: 'All fields are required!' });
+    const resumeFile = files?.resume?.[0];
+    if (!resumeFile) {
+        return res.status(400).json({ message: 'Resume file is required!' });
     }
-
-    try{
+    
+    const { buffer: resumeBuffer, originalname: resumeOriginalName } = resumeFile;
+    
+    const jdFile = files?.jd?.[0];
+    let jdBuffer = null;
+    let jdOriginalName = null;
+    
+    if (jdFile) {
+        jdBuffer = jdFile.buffer;
+        jdOriginalName = jdFile.originalname;
+        console.log("JD file received:", jdOriginalName);
+    }
+    
+    const { jdText } = req.body;
+    
+    try {
+        const resumeResult = await uplodToCloudinary(resumeBuffer, resumeOriginalName);
+        if (!resumeResult) {
+            return res.status(500).json({ message: 'Failed to upload resume file!' });
+        }
+        
+        const resumeContent = await downloadAndParseResume(resumeResult);
+        
+        let jdUrl = null;
+        let jdContent = null;
+        
+        if (jdBuffer && jdOriginalName) {
+            console.log("Processing JD file...");
+            jdUrl = await uplodToCloudinary(jdBuffer, jdOriginalName);
+            if (jdUrl) {
+                jdContent = await parseJD(jdUrl, true); 
+            }
+        } else if (jdText && jdText.trim()) {
+            console.log("Processing JD text...");
+            jdContent = jdText.trim();
+        }
+        
+        const { type, position, experience, specialization, company, style, duration } = req.body;
+        if (!type || !position || !experience || !specialization || !company || !style || !duration) {
+            return res.status(400).json({ message: 'All required fields must be provided!' });
+        }
+        
         const interview = await prisma.interview.create({
-            data:{
+            data: {
                 type,
                 position,
                 experience,
                 specialization,
                 company,
                 style,
-                resumeUrl : result,
+                resumeUrl: resumeResult,
+                resumeContent,
+                jdUrl,
+                jdContent,
                 duration,
-                userId,
-                resumeContent 
+                userId
             }
         });
-        const id = interview.id;
-        return res.status(201).json({ message: 'Interview created successfully!', interviewId: id });
         
-    }
-    catch(err) {
+        const id = interview.id;
+        return res.status(201).json({ 
+            message: 'Interview created successfully!', 
+            interviewId: id,
+            hasJD: !!jdContent
+        });
+        
+    } catch (err) {
         console.error("Error creating interview:", err);
         return res.status(500).json({ message: 'Internal server error!' });
     }

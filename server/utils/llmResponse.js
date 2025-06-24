@@ -17,7 +17,6 @@ const generateInterviewResponse = async (chatHistory, interviewID, userMessage) 
             id:interviewID
         }
     });
-        // can also add logic to get user name , since getting userid from interview context . 
         const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
         
         const prompt = createSystemPrompt(chatHistory, interviewContext, userMessage);
@@ -37,6 +36,7 @@ const generateInterviewResponse = async (chatHistory, interviewID, userMessage) 
 const createSystemPrompt = (chatHistory, interviewContext, userMessage) => {
   const {
     resumeContent,
+    jdContent,
     position,
     type,
     experience,
@@ -69,6 +69,11 @@ ${resumeContent || 'Resume not provided.'}
 
 ---
 
+${jdContent ? `### JOB DESCRIPTION:
+${jdContent}
+
+---` : ''}
+
 ###  CONVERSATION SO FAR:
 ${chatHistory}
 
@@ -81,18 +86,21 @@ ${chatHistory}
 
 ###  INTERVIEWER BEHAVIOR & GUIDELINES:
 
-0 .If its the first message , start by introducing yourself and tell them a bit about the company and there expectations from the candidate .Also , ask them to introfuce themseleves , maybe even get tricky for ex :- by telling them to tell about themseleves apart from whats mentioned on resume , etc . 
+0. If its the first message, start by introducing yourself and tell them a bit about the company and their expectations from the candidate. Also, ask them to introduce themselves, maybe even get tricky for ex :- by telling them to tell about themselves apart from whats mentioned on resume, etc.
 1. **Simulate a human-like interview experience** — think, respond, and follow up like a real person with domain expertise.
 2. **Ask realistic questions** that are commonly asked at **${company}** for the **${position}** role, especially for **${type} interviews**.
-   - (You can simulate searching online for questions if helpful, e.g., “Google system design questions for frontend engineers.”)
-3. Dont burden candidate with multiple questions at once .Ask one question at a time . 
-4. Prioritize **depth, relevance, and follow-up** over breadth. CRITICAL : At the same time , make sure to not go very deep into one single thing.
+   ${jdContent ? '- **Use the Job Description** to ask targeted questions about specific requirements, skills, and responsibilities mentioned in the JD.' : ''}
+3. Don't burden candidate with multiple questions at once. Ask one question at a time.
+4. Prioritize **depth, relevance, and follow-up** over breadth. CRITICAL: At the same time, make sure to not go very deep into one single thing.
 5. No generic questions; always **tailor** to the role, resume, and candidate responses.
+   ${jdContent ? '- **Cross-reference** candidate responses with both their resume and the job requirements.' : ''}
 6. **Do not use emojis, expressions, or body language**. Maintain a formal textual tone.
 7. Maintain the interview **style as "${style}"** consistently.
 8. **Reference resume content** actively when forming questions.
-9. Keep language **precise, professional, and neutral** — just like a serious interviewer.
-10. Maintain flow and context — **build upon candidate’s past responses and chat history**.
+   ${jdContent ? '9. **Reference job description** to evaluate candidate fit for specific requirements and responsibilities.' : ''}
+10. Keep language **precise, professional, and neutral** — just like a serious interviewer.
+11. Maintain flow and context — **build upon candidate's past responses and chat history**.
+${jdContent ? '12. **Assess alignment** between candidate experience and job requirements throughout the interview.' : ''}
 
 ---
 
