@@ -102,121 +102,122 @@ const InterviewCreationForm: React.FC<InterviewCreationFormProps> = ({
     resetForm();
   };
 
-  const handleSubmit = async () => {
-    if (!userData) {
-      const errorMsg = 'Please login to create an interview';
+ const handleSubmit = async () => {
+  if (!userData) {
+    const errorMsg = 'Please login to create an interview';
+    toast.error(errorMsg);
+    onError?.(errorMsg);
+    return;
+  }
+
+  const requiredFields: (keyof FormDataType)[] = [
+    'type',
+    'position',
+    'experience',
+    'specialization',
+    'company',
+    'style',
+    'duration',
+  ];
+  const missing = requiredFields.filter((f) => !formData[f]);
+
+  if (missing.length > 0) {
+    const errorMsg = `Please fill in all fields: ${missing.join(', ')}`;
+    toast.error(errorMsg);
+    onError?.(errorMsg);
+    return;
+  }
+
+  if (!formData.resume) {
+    const errorMsg = 'Resume is required';
+    toast.error(errorMsg);
+    onError?.(errorMsg);
+    return;
+  }
+
+  if (jdInputType === 'file' && !formData.jd) {
+    const errorMsg = 'Please upload a JD file or switch to text input';
+    toast.error(errorMsg);
+    onError?.(errorMsg);
+    return;
+  }
+
+  if (jdInputType === 'text' && !formData.jdText.trim()) {
+    const errorMsg = 'Please enter JD text or switch to file upload';
+    toast.error(errorMsg);
+    onError?.(errorMsg);
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const errorMsg = 'Unauthorized';
       toast.error(errorMsg);
       onError?.(errorMsg);
+      router.push('/');
       return;
     }
 
-    const requiredFields: (keyof FormDataType)[] = [
-      'type',
-      'position',
-      'experience',
-      'specialization',
-      'company',
-      'style',
-      'duration',
-    ];
-    const missing = requiredFields.filter((f) => !formData[f]);
+    const body = new FormData();
 
-    if (missing.length > 0) {
-      const errorMsg = `Please fill in all fields: ${missing.join(', ')}`;
-      toast.error(errorMsg);
-      onError?.(errorMsg);
-      return;
-    }
-
-    if (!formData.resume) {
-      const errorMsg = 'Resume is required';
-      toast.error(errorMsg);
-      onError?.(errorMsg);
-      return;
-    }
-
-    if (jdInputType === 'file' && !formData.jd) {
-      const errorMsg = 'Please upload a JD file or switch to text input';
-      toast.error(errorMsg);
-      onError?.(errorMsg);
-      return;
-    }
-
-    if (jdInputType === 'text' && !formData.jdText.trim()) {
-      const errorMsg = 'Please enter JD text or switch to file upload';
-      toast.error(errorMsg);
-      onError?.(errorMsg);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        const errorMsg = 'Unauthorized';
-        toast.error(errorMsg);
-        onError?.(errorMsg);
-        router.push('/');
-        return;
+    // Exclude jdText from loop to avoid double appending
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key !== 'resume' && key !== 'jd' && key !== 'jdText' && value) {
+        body.append(key, value);
       }
+    });
 
-      const body = new FormData();
-      
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key !== 'resume' && key !== 'jd' && value) {
-          body.append(key, value);
-        }
-      });
+    if (formData.resume) {
+      body.append('resume', formData.resume);
+    }
 
-      if (formData.resume) {
-        body.append('resume', formData.resume);
-      }
+    if (jdInputType === 'file' && formData.jd) {
+      body.append('jd', formData.jd);
+    } else if (jdInputType === 'text' && formData.jdText.trim()) {
+      body.append('jdText', formData.jdText.trim()); // ✅ Correctly append here only
+    }
 
-      if (jdInputType === 'file' && formData.jd) {
-        body.append('jd', formData.jd);
-      } else if (jdInputType === 'text' && formData.jdText.trim()) {
-        body.append('jdText', formData.jdText.trim());
-      }
+    const res = await fetch(`${BE_URL}/api/v1/interview/create`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body,
+    });
 
-      const res = await fetch(`${BE_URL}/api/v1/interview/create`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body,
-      });
+    const result = await res.json();
+    const { interviewId, hasJD } = result;
 
-      const result = await res.json();
-      const { interviewId, hasJD } = result;
-
-      if (res.ok) {
-        toast.success(result.message);
-        const interviewData: InterviewData = {
-          id: interviewId,
-          type: formData.type,
-          position: formData.position,
-          experience: formData.experience,
-          specialization: formData.specialization,
-          company: formData.company,
-          style: formData.style,
-          duration: formData.duration,
-          createdAt: new Date().toISOString(),
-          hasJD,
-        };
-        setCreatedInterview(interviewData);
-        onSuccess?.(interviewId);
-      } else {
-        const errorMsg = result.message || 'Failed to create interview';
-        toast.error(errorMsg);
-        onError?.(errorMsg);
-      }
-    } catch (err) {
-      console.error(err);
-      const errorMsg = 'Something went wrong. Please try again.';
+    if (res.ok) {
+      toast.success(result.message);
+      const interviewData: InterviewData = {
+        id: interviewId,
+        type: formData.type,
+        position: formData.position,
+        experience: formData.experience,
+        specialization: formData.specialization,
+        company: formData.company,
+        style: formData.style,
+        duration: formData.duration,
+        createdAt: new Date().toISOString(),
+        hasJD,
+      };
+      setCreatedInterview(interviewData);
+      onSuccess?.(interviewId);
+    } else {
+      const errorMsg = result.message || 'Failed to create interview';
       toast.error(errorMsg);
       onError?.(errorMsg);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (err) {
+    console.error(err);
+    const errorMsg = 'Something went wrong. Please try again.';
+    toast.error(errorMsg);
+    onError?.(errorMsg);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   if (createdInterview) {
     return (
