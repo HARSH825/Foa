@@ -1,5 +1,7 @@
 import prisma from "../config/prismaClient.js";
 import summarise from "../utils/summarise.js";
+import idealAns from "../utils/getIdealAnswer.js";
+
 const getSummary = async(req , res)=>{
     const interviewId = req.params.interviewId;
     // console.log(interviewId);
@@ -18,11 +20,14 @@ const getSummary = async(req , res)=>{
          const chatHistory = data.InterviewChat.map(chat => {
         return `${chat.sender === 'user' ? 'USER' : 'AI'} : ${chat.message}`;
         }).join('\n');
-
+        
+        
         const response = await summarise(chatHistory);
         let finalResponse =  response.trim().replace(/^```json\s*|\s*```$/g, '');
-
-        return res.json({summary : finalResponse});
+        
+        const idealAnswer = await idealAns(chatHistory,data);
+        let idealAnswerFinalResponse = idealAnswer.trim().replace(/^```json\s*|\s*```$/g,'');
+        return res.json({summary : finalResponse , idealAns : idealAnswerFinalResponse , chatHistory:chatHistory});
 
     }
     catch(err){
