@@ -9,17 +9,18 @@ if (!process.env.GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const idealAns = async(chatHistory,interviewContext)=>{
+const idealAns = async(chatHistory,data)=>{
     const model = genAI.getGenerativeModel({model:"gemini-2.0-flash"});
-    const prompt = createPrompt(chatHistory);
+    const prompt = createPrompt(chatHistory,data);
     const result = await model.generateContent(prompt);
     const text =  result.response.text();
      return text.trim();
 }
 
 const createPrompt = function(chatHistory, interviewContext) {
+    
     const {
-        resumeContent,
+        resumeContent ,
         jdContent,
         position,
         type,
