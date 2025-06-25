@@ -16,7 +16,7 @@ const idealAns = async(chatHistory,data)=>{
     const text =  result.response.text();
      return text.trim();
 }
-
+ 
 const createPrompt = function(chatHistory, interviewContext) {
     
     const {
