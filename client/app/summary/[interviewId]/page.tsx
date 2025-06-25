@@ -128,7 +128,7 @@ export default function SummaryPage() {
     setExpandedQuestions(newExpanded);
   };
 
-  const truncateText = (text: string, limit: number = 200) => {
+  const truncateText = (text: string, limit: number = 300) => {
     if (text.length <= limit) return text;
     return text.substring(0, limit) + "...";
   };
@@ -139,153 +139,170 @@ export default function SummaryPage() {
 
   if (!summaryData && !idealAnswersData) {
     return (
-      <div className="text-center text-red-500 py-10">
-        Failed to generate or load summary. Summary is available only when you have taken Interview/s.
+      <div className="min-h-screen bg-black">
+        <div className="text-center text-red-400 py-10">
+          Failed to generate or load summary. Summary is available only when you have taken Interview/s.
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h2 className="text-3xl font-bold text-foreground mb-6">Interview Analysis</h2>
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h2 className="text-4xl font-bold text-white mb-8">Interview Analysis</h2>
 
-      {/* Tab Navigation */}
-      <div className="flex border-b border-border mb-6">
-        <button
-          className={`px-6 py-3 font-medium text-lg transition-colors ${
-            activeTab === 'ideal'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          onClick={() => setActiveTab('ideal')}
-        >
-          Ideal Answers
-        </button>
-        <button
-          className={`px-6 py-3 font-medium text-lg transition-colors ${
-            activeTab === 'summary'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          onClick={() => setActiveTab('summary')}
-        >
-          Summary
-        </button>
-      </div>
+        {/* Tab Navigation */}
+        <div className="flex border-b border-slate-700 mb-8">
+          <button
+            className={`px-6 py-3 font-medium text-lg transition-colors ${
+              activeTab === 'ideal'
+                ? 'border-b-2 border-blue-400 text-blue-400'
+                : 'text-slate-400 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('ideal')}
+          >
+            Ideal Answers
+          </button>
+          <button
+            className={`px-6 py-3 font-medium text-lg transition-colors ${
+              activeTab === 'summary'
+                ? 'border-b-2 border-blue-400 text-blue-400'
+                : 'text-slate-400 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('summary')}
+          >
+            Summary
+          </button>
+        </div>
 
-      {/* Ideal Answers Tab */}
-      {activeTab === 'ideal' && (
-        <div className="space-y-6">
-          {processedChat.length > 0 ? (
-            processedChat.map((chat, index) => (
-              <div key={index} className="bg-card border border-border rounded-lg p-6">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-blue-600 mb-2">
-                    Question {chat.questionIndex}:
-                  </h3>
-                  <div className="text-foreground text-base">
-                    <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
-                      <p className="whitespace-pre-wrap leading-relaxed">
-                        {expandedQuestions.has(index) 
-                          ? chat.question 
-                          : truncateText(chat.question, 200)
-                        }
-                      </p>
-                      {chat.question.length > 200 && (
-                        <button
-                          onClick={() => toggleExpandQuestion(index)}
-                          className="text-blue-600 hover:text-blue-800 text-sm mt-2 font-medium underline"
-                        >
-                          {expandedQuestions.has(index) ? 'Show Less' : 'Read More'}
-                        </button>
-                      )}
+        {/* Ideal Answers Tab */}
+        {activeTab === 'ideal' && (
+          <div className="space-y-8">
+            {processedChat.length > 0 ? (
+              processedChat.map((chat, index) => (
+                <div key={index} className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:bg-slate-750 transition-colors">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                      <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
+                        Q{chat.questionIndex}
+                      </span>
+                      Question:
+                    </h3>
+                    <div className="text-white text-base">
+                      <div className="bg-slate-700 p-4 rounded-lg border-l-4 border-blue-400">
+                        <p className="whitespace-pre-wrap leading-relaxed text-slate-100">
+                          {expandedQuestions.has(index) 
+                            ? chat.question 
+                            : truncateText(chat.question, 400)
+                          }
+                        </p>
+                        {chat.question.length > 400 && (
+                          <button
+                            onClick={() => toggleExpandQuestion(index)}
+                            className="text-blue-400 hover:text-blue-300 text-sm mt-3 font-medium underline transition-colors"
+                          >
+                            {expandedQuestions.has(index) ? 'Show Less' : 'Read More'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mb-4">
-                  <h4 className="text-md font-medium text-gray-600 mb-2">Your Answer:</h4>
-                  <div className="text-muted-foreground text-sm bg-gray-50 p-3 rounded border-l-4 border-gray-300">
-                    <p className="whitespace-pre-wrap">{chat.answer}</p>
+                  <div className="mb-6">
+                    <h4 className="text-lg font-medium text-slate-300 mb-3 flex items-center gap-2">
+                      <span className="text-red-400">👤</span>
+                      Your Answer:
+                    </h4>
+                    <div className="text-slate-200 text-sm bg-slate-700 p-4 rounded-lg border-l-4 border-red-400">
+                      <p className="whitespace-pre-wrap leading-relaxed">{chat.answer}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <button
+                      onClick={() => toggleExpandAnswer(index)}
+                      className="flex items-center gap-2 text-green-400 font-medium hover:text-green-300 transition-colors mb-3 text-lg"
+                    >
+                      <span> Ideal Answer</span>
+                      <span className="text-sm">
+                        {expandedAnswers.has(index) ? '▼' : '▶'}
+                      </span>
+                    </button>
+                    
+                    {expandedAnswers.has(index) && (
+                      <div className="bg-slate-700 p-4 rounded-lg border-l-4 border-green-400">
+                        <p className="text-green-100 text-sm leading-relaxed whitespace-pre-wrap">
+                          {chat.idealAnswer}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div>
-                  <button
-                    onClick={() => toggleExpandAnswer(index)}
-                    className="flex items-center gap-2 text-green-600 font-medium hover:text-green-700 transition-colors mb-2"
-                  >
-                    <span>💡 Ideal Answer</span>
-                    <span className="text-sm">
-                      {expandedAnswers.has(index) ? '▼' : '▶'}
-                    </span>
-                  </button>
-                  
-                  {expandedAnswers.has(index) && (
-                    <div className="bg-green-50 p-4 rounded border-l-4 border-green-400">
-                      <p className="text-green-800 text-sm leading-relaxed whitespace-pre-wrap">
-                        {chat.idealAnswer}
-                      </p>
-                    </div>
-                  )}
-                </div>
+              ))
+            ) : (
+              <div className="text-center text-slate-400 py-12">
+                <div className="text-6xl mb-4"></div>
+                <p className="text-xl">No question-answer data available for this interview.</p>
               </div>
-            ))
-          ) : (
-            <div className="text-center text-muted-foreground py-8">
-              No question-answer data available for this interview.
-            </div>
-          )}
+            )}
+          </div>
+        )}
+
+        {/* Summary Tab */}
+        {activeTab === 'summary' && summaryData && (
+          <div className="space-y-8">
+            <section className="mb-10">
+              <h3 className="text-3xl font-bold text-green-400 mb-6 flex items-center gap-3">
+                <span></span> Strengths
+              </h3>
+              <div className="grid gap-4">
+                {summaryData.strengths.map((item, idx) => (
+                  <div key={idx} className="bg-slate-800 border border-slate-700 p-6 rounded-lg hover:bg-slate-750 transition-colors">
+                    <p className="font-semibold text-white text-xl mb-2">{item.point}</p>
+                    <p className="text-slate-300 text-lg leading-relaxed">{item.example}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="mb-10">
+              <h3 className="text-3xl font-bold text-yellow-400 mb-6 flex items-center gap-3">
+                <span></span> Areas for Improvement
+              </h3>
+              <div className="grid gap-4">
+                {summaryData.weaknesses.map((item, idx) => (
+                  <div key={idx} className="bg-slate-800 border border-slate-700 p-6 rounded-lg hover:bg-slate-750 transition-colors">
+                    <p className="font-semibold text-white text-xl mb-2">{item.issue}</p>
+                    <p className="text-slate-300 text-lg leading-relaxed">{item.advice}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 text-transparent bg-clip-text mb-6 flex items-center gap-3">
+                <span className="text-purple-400"></span> AI Recommendations
+              </h3>
+              <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg">
+                <ol className="text-lg list-decimal list-inside space-y-4 text-slate-200">
+                  {summaryData.recommendations.map((rec, idx) => (
+                    <li key={idx} className="leading-relaxed pl-2">{rec}</li>
+                  ))}
+                </ol>
+              </div>
+            </section>
+          </div>
+        )}
+
+        <div className="mt-12 text-right">
+          <button
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-colors font-medium text-lg"
+            onClick={() => router.push("/past-interview")}
+          >
+            ← Back to Past Interviews
+          </button>
         </div>
-      )}
-
-      {/* Summary Tab */}
-      {activeTab === 'summary' && summaryData && (
-        <div>
-          <section className="mb-8">
-            <h3 className="text-2xl font-bold text-green-600 mb-2">✅ Strengths</h3>
-            <ul className="space-y-3">
-              {summaryData.strengths.map((item, idx) => (
-                <li key={idx} className="bg-card border border-border p-4 rounded-lg">
-                  <p className="font-medium text-foreground text-xl">{item.point}</p>
-                  <p className="text-muted-foreground text-lg mt-1">{item.example}</p>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h3 className="text-2xl font-bold text-yellow-600 mb-2">⚠️ Weaknesses</h3>
-            <ul className="space-y-4">
-              {summaryData.weaknesses.map((item, idx) => (
-                <li key={idx} className="bg-card border border-border p-4 rounded-lg">
-                  <p className="font-medium text-foreground text-xl">{item.issue}</p>
-                  <p className="text-muted-foreground mt-1 text-lg">{item.advice}</p>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
-              🤖 AI Recommendations
-            </h3>
-            <ol className="text-lg list-decimal list-inside space-y-3 bg-card border border-border p-4 rounded-lg text-muted-foreground">
-              {summaryData.recommendations.map((rec, idx) => (
-                <li key={idx}>{rec}</li>
-              ))}
-            </ol>
-          </section>
-        </div>
-      )}
-
-      <div className="mt-8 text-right">
-        <button
-          className="bg-primary text-primary-foreground px-6 py-3 rounded hover:bg-primary/90 transition-colors"
-          onClick={() => router.push("/past-interview")}
-        >
-          ← Back to Past Interviews
-        </button>
       </div>
     </div>
   );
