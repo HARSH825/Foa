@@ -86,35 +86,62 @@ export default function SummaryPage() {
   };
 
   const processChatHistory = (chatHistory: string, idealAnswers: IdealAnswersData): ChatMessage[] => {
-    const lines = chatHistory.split('\n').filter(line => line.trim());
-    const messages: ChatMessage[] = [];
-    let currentQuestion = "";
-    let answerIndex = 1; 
+  const lines = chatHistory.split('\n');
+  const messages: ChatMessage[] = [];
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      if (line.startsWith('AI :')) {
-        currentQuestion = cleanText(line.replace('AI :', '').trim());
-      } 
-      else if (line.startsWith('USER :') && currentQuestion) {
-        const userAnswer = cleanText(line.replace('USER :', '').trim());
-        const idealAnswer = idealAnswers[answerIndex.toString()]?.ideal_answer || "No ideal answer provided";
-        
+  let currentQuestionLines: string[] = [];
+  let currentAnswerLines: string[] = [];
+  let isReadingQuestion = false;
+  let isReadingAnswer = false;
+  let questionIndex = 1;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith("AI :")) {
+      // New question starts
+      if (currentQuestionLines.length && currentAnswerLines.length) {
+        const fullQuestion = cleanText(currentQuestionLines.join(' '));
+        const fullAnswer = cleanText(currentAnswerLines.join(' '));
+        const idealAnswer = idealAnswers[questionIndex.toString()]?.ideal_answer || "No ideal answer provided";
+
         messages.push({
-          question: currentQuestion,
-          answer: userAnswer,
-          idealAnswer: idealAnswer,
-          questionIndex: answerIndex
+          question: fullQuestion,
+          answer: fullAnswer,
+          idealAnswer,
+          questionIndex
         });
-        
-        answerIndex++;
-        currentQuestion = ""; 
-      }
-    }
 
-    return messages;
-  };
+        questionIndex++;
+        currentQuestionLines = [];
+        currentAnswerLines = [];
+      }
+
+      isReadingQuestion = true;
+      isReadingAnswer = false;
+      currentQuestionLines = [trimmed.replace("AI :", "").trim()];
+    } else if (trimmed.startsWith("USER :")) {
+      isReadingAnswer = true;
+      isReadingQuestion = false;
+      currentAnswerLines = [trimmed.replace("USER :", "").trim()];
+    } else {
+      if (isReadingQuestion) currentQuestionLines.push(trimmed);
+      else if (isReadingAnswer) currentAnswerLines.push(trimmed);
+    }
+  }
+
+  // Push the last QA if any
+  if (currentQuestionLines.length && currentAnswerLines.length) {
+    messages.push({
+      question: cleanText(currentQuestionLines.join(' ')),
+      answer: cleanText(currentAnswerLines.join(' ')),
+      idealAnswer: idealAnswers[questionIndex.toString()]?.ideal_answer || "No ideal answer provided",
+      questionIndex
+    });
+  }
+
+  return messages;
+};
 
   const toggleExpandAnswer = (index: number) => {
     const newExpanded = new Set(expandedAnswers);

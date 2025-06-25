@@ -30,7 +30,7 @@ const getSummary = async(req , res)=>{
             return `${chat.sender === 'user' ? 'USER' : 'AI'} : ${chat.message}`;
         }).join('\n');
         
-        console.log("Chat History for processing:", chatHistory);
+        // console.log("Chat History for processing:", chatHistory);
         
         const response = await summarise(chatHistory);
         let finalResponse = response.trim().replace(/^```json\s*|\s*```$/g, '');
@@ -38,7 +38,7 @@ const getSummary = async(req , res)=>{
         const idealAnswer = await idealAns(chatHistory, data);
         let idealAnswerFinalResponse = idealAnswer.trim().replace(/^```json\s*|\s*```$/g,'');
         
-        console.log("Generated Ideal Answers:", idealAnswerFinalResponse);
+        // console.log("Generated Ideal Answers:", idealAnswerFinalResponse);
         
         return res.json({
             summary: finalResponse, 

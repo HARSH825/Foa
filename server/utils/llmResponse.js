@@ -104,7 +104,7 @@ ${jdContent ? '12. **Assess alignment** between candidate experience and job req
 
 ---
 
- Now continue the interview naturally based on the latest response and conversation history, starting with the next question.Keep response concise and strictly below 100 words.Respond authentically—be direct or blunt when appropriate, not overly kind or lenient
+ Now continue the interview naturally based on the latest response and conversation history, starting with the next question.Keep response concise and strictly below 70 words and dont ask many questions at once, go step by step.Respond authentically—be direct or blunt when appropriate, not overly kind or lenient
 `;
 };
 
