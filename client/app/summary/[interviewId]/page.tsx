@@ -77,6 +77,14 @@ export default function SummaryPage() {
     fetchSummary();
   }, [interviewId, router]);
 
+  const cleanText = (text: string): string => {
+    return text
+      .replace(/\\n/g, ' ') 
+      .replace(/\n/g, ' ')  
+      .replace(/\s+/g, ' ') 
+      .trim();
+  };
+
   const processChatHistory = (chatHistory: string, idealAnswers: IdealAnswersData): ChatMessage[] => {
     const lines = chatHistory.split('\n').filter(line => line.trim());
     const messages: ChatMessage[] = [];
@@ -87,10 +95,10 @@ export default function SummaryPage() {
       const line = lines[i].trim();
       
       if (line.startsWith('AI :')) {
-        currentQuestion = line.replace('AI :', '').trim();
+        currentQuestion = cleanText(line.replace('AI :', '').trim());
       } 
       else if (line.startsWith('USER :') && currentQuestion) {
-        const userAnswer = line.replace('USER :', '').trim();
+        const userAnswer = cleanText(line.replace('USER :', '').trim());
         const idealAnswer = idealAnswers[answerIndex.toString()]?.ideal_answer || "No ideal answer provided";
         
         messages.push({
@@ -191,13 +199,13 @@ export default function SummaryPage() {
                     </h3>
                     <div className="text-white text-base">
                       <div className="bg-slate-700 p-4 rounded-lg border-l-4 border-blue-400">
-                        <p className="whitespace-pre-wrap leading-relaxed text-slate-100">
+                        <p className="leading-relaxed text-slate-100">
                           {expandedQuestions.has(index) 
                             ? chat.question 
-                            : truncateText(chat.question, 400)
+                            : truncateText(chat.question, 300)
                           }
                         </p>
-                        {chat.question.length > 400 && (
+                        {chat.question.length > 300 && (
                           <button
                             onClick={() => toggleExpandQuestion(index)}
                             className="text-blue-400 hover:text-blue-300 text-sm mt-3 font-medium underline transition-colors"
@@ -211,11 +219,10 @@ export default function SummaryPage() {
 
                   <div className="mb-6">
                     <h4 className="text-lg font-medium text-slate-300 mb-3 flex items-center gap-2">
-                      <span className="text-red-400">👤</span>
-                      Your Answer:
+                      <span className="text-red-400">Your Answer:</span>
                     </h4>
                     <div className="text-slate-200 text-sm bg-slate-700 p-4 rounded-lg border-l-4 border-red-400">
-                      <p className="whitespace-pre-wrap leading-relaxed">{chat.answer}</p>
+                      <p className="leading-relaxed">{chat.answer}</p>
                     </div>
                   </div>
 
@@ -224,7 +231,7 @@ export default function SummaryPage() {
                       onClick={() => toggleExpandAnswer(index)}
                       className="flex items-center gap-2 text-green-400 font-medium hover:text-green-300 transition-colors mb-3 text-lg"
                     >
-                      <span> Ideal Answer</span>
+                      <span>Ideal Answer</span>
                       <span className="text-sm">
                         {expandedAnswers.has(index) ? '▼' : '▶'}
                       </span>
@@ -232,7 +239,7 @@ export default function SummaryPage() {
                     
                     {expandedAnswers.has(index) && (
                       <div className="bg-slate-700 p-4 rounded-lg border-l-4 border-green-400">
-                        <p className="text-green-100 text-sm leading-relaxed whitespace-pre-wrap">
+                        <p className="text-green-100 text-sm leading-relaxed">
                           {chat.idealAnswer}
                         </p>
                       </div>
@@ -242,7 +249,6 @@ export default function SummaryPage() {
               ))
             ) : (
               <div className="text-center text-slate-400 py-12">
-                <div className="text-6xl mb-4"></div>
                 <p className="text-xl">No question-answer data available for this interview.</p>
               </div>
             )}
@@ -254,7 +260,7 @@ export default function SummaryPage() {
           <div className="space-y-8">
             <section className="mb-10">
               <h3 className="text-3xl font-bold text-green-400 mb-6 flex items-center gap-3">
-                <span></span> Strengths
+                Strengths
               </h3>
               <div className="grid gap-4">
                 {summaryData.strengths.map((item, idx) => (
@@ -268,7 +274,7 @@ export default function SummaryPage() {
 
             <section className="mb-10">
               <h3 className="text-3xl font-bold text-yellow-400 mb-6 flex items-center gap-3">
-                <span></span> Areas for Improvement
+                Areas for Improvement
               </h3>
               <div className="grid gap-4">
                 {summaryData.weaknesses.map((item, idx) => (
@@ -282,7 +288,7 @@ export default function SummaryPage() {
 
             <section>
               <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 text-transparent bg-clip-text mb-6 flex items-center gap-3">
-                <span className="text-purple-400"></span> AI Recommendations
+                AI Recommendations
               </h3>
               <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg">
                 <ol className="text-lg list-decimal list-inside space-y-4 text-slate-200">
@@ -300,7 +306,7 @@ export default function SummaryPage() {
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-colors font-medium text-lg"
             onClick={() => router.push("/past-interview")}
           >
-            ← Back to Past Interviews
+            Back to Past Interviews
           </button>
         </div>
       </div>
