@@ -128,7 +128,7 @@ export default function SummaryPage() {
     setExpandedQuestions(newExpanded);
   };
 
-  const truncateText = (text: string, limit: number = 150) => {
+  const truncateText = (text: string, limit: number = 200) => {
     if (text.length <= limit) return text;
     return text.substring(0, limit) + "...";
   };
@@ -149,6 +149,7 @@ export default function SummaryPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h2 className="text-3xl font-bold text-foreground mb-6">Interview Analysis</h2>
 
+      {/* Tab Navigation */}
       <div className="flex border-b border-border mb-6">
         <button
           className={`px-6 py-3 font-medium text-lg transition-colors ${
@@ -183,27 +184,29 @@ export default function SummaryPage() {
                     Question {chat.questionIndex}:
                   </h3>
                   <div className="text-foreground text-base">
-                    <p>
-                      {expandedQuestions.has(index) 
-                        ? chat.question 
-                        : truncateText(chat.question, 200)
-                      }
-                    </p>
-                    {chat.question.length > 200 && (
-                      <button
-                        onClick={() => toggleExpandQuestion(index)}
-                        className="text-blue-500 hover:text-blue-700 text-sm mt-1 font-medium"
-                      >
-                        {expandedQuestions.has(index) ? 'Show Less' : 'Read More'}
-                      </button>
-                    )}
+                    <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                      <p className="whitespace-pre-wrap leading-relaxed">
+                        {expandedQuestions.has(index) 
+                          ? chat.question 
+                          : truncateText(chat.question, 200)
+                        }
+                      </p>
+                      {chat.question.length > 200 && (
+                        <button
+                          onClick={() => toggleExpandQuestion(index)}
+                          className="text-blue-600 hover:text-blue-800 text-sm mt-2 font-medium underline"
+                        >
+                          {expandedQuestions.has(index) ? 'Show Less' : 'Read More'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 <div className="mb-4">
                   <h4 className="text-md font-medium text-gray-600 mb-2">Your Answer:</h4>
                   <div className="text-muted-foreground text-sm bg-gray-50 p-3 rounded border-l-4 border-gray-300">
-                    <p>{chat.answer}</p>
+                    <p className="whitespace-pre-wrap">{chat.answer}</p>
                   </div>
                 </div>
 
@@ -220,7 +223,7 @@ export default function SummaryPage() {
                   
                   {expandedAnswers.has(index) && (
                     <div className="bg-green-50 p-4 rounded border-l-4 border-green-400">
-                      <p className="text-green-800 text-sm leading-relaxed">
+                      <p className="text-green-800 text-sm leading-relaxed whitespace-pre-wrap">
                         {chat.idealAnswer}
                       </p>
                     </div>
