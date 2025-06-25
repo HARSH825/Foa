@@ -10,13 +10,20 @@ if (!process.env.GEMINI_API_KEY) {
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const idealAns = async(chatHistory, data) => {
-    const model = genAI.getGenerativeModel({model:"gemini-2.0-flash"});
-    const prompt = createPrompt(chatHistory, data);
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    return text.trim();
+    try {
+        const model = genAI.getGenerativeModel({model:"gemini-2.0-flash"});
+        const prompt = createPrompt(chatHistory, data);
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        return text.trim();
+    } catch (error) {
+        console.error("Error generating ideal answers:", error);
+        return JSON.stringify({
+            "1": { "ideal_answer": "Error generating ideal answer. Please try again later." }
+        });
+    }
 }
- 
+
 const createPrompt = function(chatHistory, interviewContext) {
     const {
         resumeContent,
@@ -29,49 +36,78 @@ const createPrompt = function(chatHistory, interviewContext) {
         style
     } = interviewContext;
 
-    const prompt = `
-You are an expert interview coach. Analyze the following interview conversation and provide ideal answers for ONLY the candidate's responses (USER responses), not the interviewer's questions.
+    const lines = chatHistory.split('\n').filter(line => line.trim());
+    let questionAnswerPairs = [];
+    let currentQuestion = "";
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.startsWith('AI :')) {
+            currentQuestion = line.replace('AI :', '').trim();
+        } else if (line.startsWith('USER :') && currentQuestion) {
+            const userAnswer = line.replace('USER :', '').trim(); 
+            questionAnswerPairs.push({
+                question: currentQuestion,
+                answer: userAnswer
+            });
+            currentQuestion = ""; 
+        }
+    }
 
-CONVERSATION HISTORY:
-${chatHistory}
+    const prompt = `
+You are an expert interview coach. Analyze the following interview conversation and provide ideal answers for each candidate response.
+
+CONVERSATION ANALYSIS:
+The conversation contains ${questionAnswerPairs.length} question-answer pairs:
+
+${questionAnswerPairs.map((pair, index) => 
+    `Q${index + 1}: ${pair.question}\nCandidate's A${index + 1}: ${pair.answer}\n`
+).join('\n')}
 
 CONTEXT:
-- Resume: ${resumeContent}
-- Job Description: ${jdContent}
-- Position: ${position}
-- Interview Type: ${type}
-- Experience Level: ${experience}
-- Specialization: ${specialization}
-- Company: ${company}
-- Style: ${style}
+- Resume: ${resumeContent || 'Not provided'}
+- Job Description: ${jdContent || 'Not provided'}
+- Position: ${position || 'Not specified'}
+- Interview Type: ${type || 'General'}
+- Experience Level: ${experience || 'Not specified'}
+- Specialization: ${specialization || 'Not specified'}
+- Company: ${company || 'Not specified'}
+- Style: ${style || 'Professional'}
 
 INSTRUCTIONS:
-1. Parse the conversation to identify question-answer pairs
-2. For each USER response, provide an ideal answer that:
-   - Directly addresses the interviewer's question
-   - Uses specific examples from the candidate's background
-   - Follows the STAR method (Situation, Task, Action, Result) when applicable
-   - Is concise but comprehensive (2-3 sentences)
-   - Shows relevant skills and experience for the role
+For each candidate response above, provide an ideal answer that:
 
-3. If the candidate's answer is already excellent, respond with: "Your answer demonstrates good understanding. Well done!"
+1. **Directly addresses the interviewer's specific question**
+2. **Uses the STAR method** (Situation, Task, Action, Result) when telling stories
+3. **Incorporates relevant details** from the candidate's resume and experience
+4. **Aligns with the job requirements** mentioned in the job description
+5. **Is professional, confident, and concise** (2-4 sentences typically)
+6. **Includes specific examples and quantifiable results** when possible
+7. **Shows enthusiasm for the role and company**
 
-4. CRITICAL: Only analyze USER responses, ignore AI/interviewer messages when generating ideal answers
+CRITICAL REQUIREMENTS:
+- Generate exactly ${questionAnswerPairs.length} ideal answers
+- Each ideal answer should correspond to the candidate's response to that specific question
+- If a candidate's answer is already excellent, acknowledge it but still provide enhancement suggestions
+- Focus on what makes each answer better, not just different
 
 Return ONLY a JSON object in this exact format:
 {
-    "1": { "ideal_answer": "For the question about yourself, highlight your [specific experience] at [company], emphasizing [key achievement] that directly relates to this role..." },
-    "2": { "ideal_answer": "When discussing [topic], mention your experience with [specific technology/skill] and provide the example of [specific project/result]..." }
+    "1": { "ideal_answer": "[Enhanced answer for the first candidate response that directly addresses: '${questionAnswerPairs[0]?.question || 'Question not found'}']" },
+    "2": { "ideal_answer": "[Enhanced answer for the second candidate response that directly addresses: '${questionAnswerPairs[1]?.question || 'Question not found'}']" }${questionAnswerPairs.length > 2 ? ',\n    ...' : ''}
 }
 
-Where each number corresponds to the USER's response number in the conversation (1st user response = "1", 2nd user response = "2", etc.)
+Make sure each ideal answer:
+- Starts by directly addressing the specific question asked
+- Provides concrete examples from relevant experience
+- Ends with a connection to why this makes them suitable for the role
+- Is tailored to the ${position || 'target position'} at ${company || 'the company'}
 
-Make sure the ideal answers are:
-- Specific to the role and company
-- Professional and confident
-- Include quantifiable results when possible
-- Address the interviewer's question directly
-    `;
+EXAMPLE FORMAT FOR RESPONSES:
+"To answer your question about [specific topic from question], I have [specific experience/skill]. For example, at [company/project], I [specific action taken] which resulted in [quantifiable outcome]. This experience directly prepares me for [specific aspect of the target role] because [clear connection]."
+`;
+
     return prompt;
 }
 

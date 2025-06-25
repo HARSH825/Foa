@@ -19,6 +19,7 @@ interface ChatMessage {
   question: string;
   answer: string;
   idealAnswer: string;
+  questionIndex: number;
 }
 
 export default function SummaryPage() {
@@ -33,6 +34,7 @@ export default function SummaryPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ideal' | 'summary'>('ideal');
   const [expandedAnswers, setExpandedAnswers] = useState<Set<number>>(new Set());
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -79,36 +81,28 @@ export default function SummaryPage() {
     const lines = chatHistory.split('\n').filter(line => line.trim());
     const messages: ChatMessage[] = [];
     let currentQuestion = "";
-    let currentAnswer = "";
-    let questionIndex = 1;
+    let answerIndex = 1; 
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
       if (line.startsWith('AI :')) {
-        if (currentQuestion && currentAnswer) {
-          const idealAnswer = idealAnswers[questionIndex.toString()]?.ideal_answer || "No ideal answer provided";
-          messages.push({
-            question: currentQuestion,
-            answer: currentAnswer,
-            idealAnswer: idealAnswer
-          });
-          questionIndex++;
-        }
         currentQuestion = line.replace('AI :', '').trim();
-        currentAnswer = "";
-      } else if (line.startsWith('USER :')) {
-        currentAnswer = line.replace('USER :', '').trim();
+      } 
+      else if (line.startsWith('USER :') && currentQuestion) {
+        const userAnswer = line.replace('USER :', '').trim();
+        const idealAnswer = idealAnswers[answerIndex.toString()]?.ideal_answer || "No ideal answer provided";
+        
+        messages.push({
+          question: currentQuestion,
+          answer: userAnswer,
+          idealAnswer: idealAnswer,
+          questionIndex: answerIndex
+        });
+        
+        answerIndex++;
+        currentQuestion = ""; 
       }
-    }
-
-    if (currentQuestion && currentAnswer) {
-      const idealAnswer = idealAnswers[questionIndex.toString()]?.ideal_answer || "No ideal answer provided";
-      messages.push({
-        question: currentQuestion,
-        answer: currentAnswer,
-        idealAnswer: idealAnswer
-      });
     }
 
     return messages;
@@ -122,6 +116,21 @@ export default function SummaryPage() {
       newExpanded.add(index);
     }
     setExpandedAnswers(newExpanded);
+  };
+
+  const toggleExpandQuestion = (index: number) => {
+    const newExpanded = new Set(expandedQuestions);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedQuestions(newExpanded);
+  };
+
+  const truncateText = (text: string, limit: number = 150) => {
+    if (text.length <= limit) return text;
+    return text.substring(0, limit) + "...";
   };
 
   if (loading) {
@@ -140,7 +149,6 @@ export default function SummaryPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h2 className="text-3xl font-bold text-foreground mb-6">Interview Analysis</h2>
 
-      {/* Tab Navigation */}
       <div className="flex border-b border-border mb-6">
         <button
           className={`px-6 py-3 font-medium text-lg transition-colors ${
@@ -164,6 +172,7 @@ export default function SummaryPage() {
         </button>
       </div>
 
+      {/* Ideal Answers Tab */}
       {activeTab === 'ideal' && (
         <div className="space-y-6">
           {processedChat.length > 0 ? (
@@ -171,16 +180,31 @@ export default function SummaryPage() {
               <div key={index} className="bg-card border border-border rounded-lg p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-blue-600 mb-2">
-                    Question {index + 1}:
+                    Question {chat.questionIndex}:
                   </h3>
-                  <p className="text-foreground text-base">{chat.question}</p>
+                  <div className="text-foreground text-base">
+                    <p>
+                      {expandedQuestions.has(index) 
+                        ? chat.question 
+                        : truncateText(chat.question, 200)
+                      }
+                    </p>
+                    {chat.question.length > 200 && (
+                      <button
+                        onClick={() => toggleExpandQuestion(index)}
+                        className="text-blue-500 hover:text-blue-700 text-sm mt-1 font-medium"
+                      >
+                        {expandedQuestions.has(index) ? 'Show Less' : 'Read More'}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mb-4">
                   <h4 className="text-md font-medium text-gray-600 mb-2">Your Answer:</h4>
-                  <p className="text-muted-foreground text-sm bg-gray-50 p-3 rounded border-l-4 border-gray-300">
-                    {chat.answer}
-                  </p>
+                  <div className="text-muted-foreground text-sm bg-gray-50 p-3 rounded border-l-4 border-gray-300">
+                    <p>{chat.answer}</p>
+                  </div>
                 </div>
 
                 <div>
@@ -188,7 +212,7 @@ export default function SummaryPage() {
                     onClick={() => toggleExpandAnswer(index)}
                     className="flex items-center gap-2 text-green-600 font-medium hover:text-green-700 transition-colors mb-2"
                   >
-                    <span> Ideal Answer</span>
+                    <span>💡 Ideal Answer</span>
                     <span className="text-sm">
                       {expandedAnswers.has(index) ? '▼' : '▶'}
                     </span>
@@ -216,7 +240,7 @@ export default function SummaryPage() {
       {activeTab === 'summary' && summaryData && (
         <div>
           <section className="mb-8">
-            <h3 className="text-2xl font-bold text-green-600 mb-2"> Strengths</h3>
+            <h3 className="text-2xl font-bold text-green-600 mb-2">✅ Strengths</h3>
             <ul className="space-y-3">
               {summaryData.strengths.map((item, idx) => (
                 <li key={idx} className="bg-card border border-border p-4 rounded-lg">
@@ -241,7 +265,7 @@ export default function SummaryPage() {
 
           <section>
             <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
-               AI Recommendations
+              🤖 AI Recommendations
             </h3>
             <ol className="text-lg list-decimal list-inside space-y-3 bg-card border border-border p-4 rounded-lg text-muted-foreground">
               {summaryData.recommendations.map((rec, idx) => (
