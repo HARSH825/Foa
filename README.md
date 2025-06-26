@@ -6,6 +6,8 @@
 
 ## The Market Gap
 
+## **Find brief comparison between FOA and other platforms here** : [Link](https://drive.google.com/drive/folders/1Ey7EkErsjS4Pqr84OI52hVF7BYvLa1Og?usp=drive_link)
+
 **All other platforms** focus on:
 - Recruiters, not candidates
 - Text-based Q&A or peer reviews
