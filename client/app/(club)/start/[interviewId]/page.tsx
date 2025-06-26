@@ -15,7 +15,7 @@ export default function StartInterview() {
   const [autoRecordEnabled, setAutoRecordEnabled] = useState(true);
   const [silenceDetectionEnabled, setSilenceDetectionEnabled] = useState(true);
   const [audioLevel, setAudioLevel] = useState(0);
-  const [speechRate, setSpeechRate] = useState(1.2); // Default pace set to 1.2
+  const [speechRate] = useState(1.3); // Fixed pace rate at 1.3
   
   const audioChunks = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -120,12 +120,6 @@ export default function StartInterview() {
     }
   };
 
-  // Function to adjust speech rate
-  const adjustSpeechRate = (delta: number) => {
-    const newRate = Math.max(0.5, Math.min(2.0, speechRate + delta));
-    setSpeechRate(newRate);
-  };
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey) {
@@ -228,7 +222,7 @@ export default function StartInterview() {
   }, [isRecording, silenceDetectionEnabled]);
 
   useEffect(() => {
-    if (!isSpeaking && autoRecordEnabled && chat.length > 0 && !isRecording && !isProcessing) {
+    if (!isSpeaking && autoRecordEnabled && chat.length > 0 && !isRecording && !isProcessing && mediaRecorder) {
       if (autoRecordTimeoutRef.current) {
         clearTimeout(autoRecordTimeoutRef.current);
       }
@@ -238,6 +232,13 @@ export default function StartInterview() {
           startRecording();
         }
       }, 1500);
+    }
+
+    if (isSpeaking || isRecording || isProcessing) {
+      if (autoRecordTimeoutRef.current) {
+        clearTimeout(autoRecordTimeoutRef.current);
+        autoRecordTimeoutRef.current = null;
+      }
     }
 
     return () => {
@@ -302,7 +303,6 @@ export default function StartInterview() {
       );
     }
 
-    // Last resort: use default voice or first available
     if (!selectedVoice) {
       selectedVoice = voices.find(voice => voice.default) || voices[0];
     }
@@ -316,6 +316,7 @@ export default function StartInterview() {
       setIsSpeaking(true);
       if (autoRecordTimeoutRef.current) {
         clearTimeout(autoRecordTimeoutRef.current);
+        autoRecordTimeoutRef.current = null;
       }
     };
     utterance.onend = () => setIsSpeaking(false);
@@ -461,33 +462,6 @@ export default function StartInterview() {
             </button>
             <span className="text-xs text-gray-400">
               {silenceDetectionEnabled ? 'Enabled' : 'Disabled'}
-            </span>
-          </div>
-
-          {/* Speech Rate Control */}
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3">
-            <span className="text-sm font-medium">Speech Pace:</span>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => adjustSpeechRate(-0.1)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm transition-colors"
-                title="Decrease pace"
-              >
-                −
-              </button>
-              <span className="text-sm font-mono min-w-[3rem] text-center">
-                {speechRate.toFixed(1)}x
-              </span>
-              <button
-                onClick={() => adjustSpeechRate(0.1)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm transition-colors"
-                title="Increase pace"
-              >
-                +
-              </button>
-            </div>
-            <span className="text-xs text-gray-400">
-              {speechRate < 0.8 ? 'Slow' : speechRate > 1.4 ? 'Fast' : 'Normal'}
             </span>
           </div>
 
@@ -686,8 +660,7 @@ export default function StartInterview() {
             <li>• {autoRecordEnabled ? "Recording will start automatically after AI finishes speaking" : "Click 'Start Recording' when ready to respond"}</li>
             <li>• {silenceDetectionEnabled ? "Recording will stop automatically after 3 seconds of silence" : "You need to manually stop recording"}</li>
             <li>• Toggle auto-recording and auto-stop using the switches above</li>
-            <li>• Adjust AI speech pace using the +/- buttons (Current: {speechRate.toFixed(1)}x)</li>
-            <li>• Male voice is enabled for consistent interview experience</li>
+            <li>• Male voice is enabled for consistent interview experience (1.3x pace)</li>
             <li>• Click "END INTERVIEW" to finish and return to past interviews</li>
           </ul>
         </div>
