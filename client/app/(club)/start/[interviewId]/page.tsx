@@ -255,8 +255,8 @@ export default function StartInterview() {
     speechSynthesis.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.3;
-    utterance.pitch = 1.5;
+    utterance.rate = 1.1;
+    utterance.pitch = 1.2;
     utterance.volume = 1.0;
 
     const voices = speechSynthesis.current.getVoices();
