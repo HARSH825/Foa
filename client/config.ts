@@ -1,1 +1,1 @@
-export const BE_URL = "https://apifoai.onrender.com"
+export const BE_URL = "https://apifoai.up.railway.app"
