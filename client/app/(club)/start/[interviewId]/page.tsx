@@ -33,7 +33,6 @@ export default function StartInterview() {
       setIsSpeaking(false);
     }
 
-    // Clear timeouts and intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -137,16 +136,33 @@ export default function StartInterview() {
     };
   }, [isRecording]);
 
-  // Auto-record only after AI finishes speaking
   useEffect(() => {
-    if (!isSpeaking && autoRecordEnabled && chat.length > 0 && !isRecording && !isProcessing) {
-      if (autoRecordTimeoutRef.current) {
-        clearTimeout(autoRecordTimeoutRef.current);
-      }
-      
+    if (autoRecordTimeoutRef.current) {
+      clearTimeout(autoRecordTimeoutRef.current);
+      autoRecordTimeoutRef.current = null;
+    }
+
+    
+    if (
+      autoRecordEnabled && 
+      !isSpeaking && 
+      chat.length > 0 && 
+      !isRecording && 
+      !isProcessing && 
+      mediaRecorder
+    ) {
+      console.log('Setting up auto-record timeout...');
       autoRecordTimeoutRef.current = setTimeout(() => {
+        console.log('Auto-record timeout triggered, checking conditions...');
+        console.log('isSpeaking:', isSpeaking);
+        console.log('isRecording:', isRecording);
+        console.log('isProcessing:', isProcessing);
+        
         if (!isSpeaking && !isRecording && !isProcessing && mediaRecorder) {
+          console.log('Starting auto-record...');
           startRecording();
+        } else {
+          console.log('Conditions not met, skipping auto-record');
         }
       }, 1500);
     }
@@ -154,6 +170,7 @@ export default function StartInterview() {
     return () => {
       if (autoRecordTimeoutRef.current) {
         clearTimeout(autoRecordTimeoutRef.current);
+        autoRecordTimeoutRef.current = null;
       }
     };
   }, [isSpeaking, autoRecordEnabled, chat.length, isRecording, isProcessing, mediaRecorder]);
@@ -205,6 +222,10 @@ export default function StartInterview() {
     }
 
     speechSynthesis.current.cancel();
+    if (autoRecordTimeoutRef.current) {
+      clearTimeout(autoRecordTimeoutRef.current);
+      autoRecordTimeoutRef.current = null;
+    }
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1.1;
@@ -231,13 +252,16 @@ export default function StartInterview() {
     }
 
     utterance.onstart = () => {
+      console.log('AI started speaking');
       setIsSpeaking(true);
       if (autoRecordTimeoutRef.current) {
         clearTimeout(autoRecordTimeoutRef.current);
+        autoRecordTimeoutRef.current = null;
       }
     };
     
     utterance.onend = () => {
+      console.log('AI finished speaking');
       setIsSpeaking(false);
     };
     
@@ -248,10 +272,22 @@ export default function StartInterview() {
   };
 
   const startRecording = () => {
-    if (!mediaRecorder) return;
+    if (!mediaRecorder) {
+      console.error('MediaRecorder not available');
+      return;
+    }
+    
+    if (isSpeaking) {
+      console.log('Cannot start recording - AI is speaking');
+      return;
+    }
+    
     if (autoRecordTimeoutRef.current) {
       clearTimeout(autoRecordTimeoutRef.current);
+      autoRecordTimeoutRef.current = null;
     }
+    
+    console.log('Starting recording...');
     audioChunks.current = [];
     mediaRecorder.start(1000); 
     setIsRecording(true);
@@ -259,6 +295,7 @@ export default function StartInterview() {
 
   const stopRecording = () => {
     if (mediaRecorder && isRecording) {
+      console.log('Stopping recording...');
       mediaRecorder.stop();
       setIsRecording(false);
       setIsProcessing(true);
@@ -499,6 +536,7 @@ export default function StartInterview() {
                   setChat([]);
                   if (autoRecordTimeoutRef.current) {
                     clearTimeout(autoRecordTimeoutRef.current);
+                    autoRecordTimeoutRef.current = null;
                   }
                 }}
                 className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-xl font-medium"
@@ -510,7 +548,7 @@ export default function StartInterview() {
         </div>
 
         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
-          <h3 className="font-medium mb-2"> Interview Tips</h3>
+          <h3 className="font-medium mb-2">🎤 Interview Tips</h3>
           <ul className="text-gray-400 text-sm space-y-1">
             <li>• Speak clearly and at a moderate pace</li>
             <li>• Keep responses under 2 minutes to avoid file size issues</li>
