@@ -19,7 +19,7 @@
 ## Demo Video
 
 <div align="center">
-  <a href="https://youtu.be/PQrJlvjPC6A">
+  <a href="https://youtu.be/wAD6VZNPW40">
     <img src="https://img.youtube.com/vi/PQrJlvjPC6A/maxresdefault.jpg" 
          alt="FOA Demo Video" 
          width="600"
@@ -31,12 +31,15 @@
 
 ## ✅ Why FOA Is the First of Its Kind
 
- Simulates full interviews — not just questions
- Reads your **resume** to understand your background
- Contextualizes questions based on **company, position, skills**
- Conducted entirely via **natural voice interaction**
- Provides **instant, AI-driven feedback** after each round
- Built **exclusively for candidates** — not HR teams or recruiters
+- Simulates full interviews — not just questions  
+- Reads your **resume** to understand your background  
+- Contextualizes questions based on **company, position, skills**  
+- Tailors every question to the **job description (JD)** you provide  
+- Conducted entirely via **natural voice interaction**  
+- Provides **instant, AI-driven feedback** after each round  
+- Shows the **ideal answer** you should have given — based on your resume + JD  
+- Built **exclusively for candidates** — not HR teams or recruiters
+
 
 ---
 
