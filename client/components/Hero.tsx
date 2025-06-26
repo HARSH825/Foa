@@ -54,7 +54,7 @@ const Hero = () => {
               variant="outline" 
               size="lg"
               className="cursor-pointer"
-              onClick={() => window.open('https://youtu.be/PQrJlvjPC6A', '_blank')}
+              onClick={() => window.open('https://youtu.be/wAD6VZNPW40', '_blank')}
             >
                View Demo
             </Button>
