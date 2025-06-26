@@ -33,7 +33,6 @@ export default function StartInterview() {
       setIsSpeaking(false);
     }
 
-    // Clear timeouts and intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -172,29 +171,29 @@ export default function StartInterview() {
     speechSynthesis.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.2;
-    utterance.pitch = 1.8;
+    utterance.rate = 1.3;
+    utterance.pitch = 1.6;
     utterance.volume = 1.0;
 
-    const voices = speechSynthesis.getVoices();
+    const voices = speechSynthesis.current.getVoices();
+    
+    const preferredMaleVoices = [
+      "Google UK English Male", 
+      "Microsoft David Desktop", 
+      "Alex",                   
+      "Daniel",                
+      "Google US English"       
+    ];
+    
+    const preferredVoice = voices.find(voice =>
+      preferredMaleVoices.includes(voice.name)
+    ) || voices.find(voice =>
+      voice.name.toLowerCase().includes("male")
+    ) || voices.find(voice => voice.default); 
 
-const preferredMaleVoices = [
-  "Google UK English Male", 
-  "Microsoft David Desktop", 
-  "Alex",                   
-  "Daniel",                 
-  "Google US English"       
-];
-
-const preferredVoice = voices.find(voice =>
-  preferredMaleVoices.includes(voice.name)
-) || voices.find(voice =>
-  voice.name.toLowerCase().includes("male")
-) || voices.find(voice => voice.default); 
-
-if (preferredVoice) {
-  utterance.voice = preferredVoice;
-}
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -478,7 +477,7 @@ if (preferredVoice) {
         </div>
 
         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
-          <h3 className="font-medium mb-2">💡 Interview Tips</h3>
+          <h3 className="font-medium mb-2"> Interview Tips</h3>
           <ul className="text-gray-400 text-sm space-y-1">
             <li>• Speak clearly and at a moderate pace</li>
             <li>• Keep responses under 2 minutes to avoid file size issues</li>
