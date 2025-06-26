@@ -52,11 +52,12 @@
 2. **Create Interview**
    - Choose type: Technical / Behavioral / DSA / HR / General
    - Input experience, target company, specialization, role
-   - Upload your **resume**
+   - Upload your **resume** and/or **Job description (JD)**
 3. **Start Interview**
    - Speak naturally — your AI interviewer responds in real time
 4. **Review & Improve**
-   - Get a breakdown of your **strengths**, **gaps**, and next steps
+   - Get a breakdown of your **strengths**, **gaps**, and next steps  
+   - See the **ideal answer** you should have given for every question — tailored to your **resume** and the **job description**
 
 ---
 
