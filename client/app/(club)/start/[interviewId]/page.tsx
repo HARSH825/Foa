@@ -15,7 +15,6 @@ export default function StartInterview() {
   const [autoRecordEnabled, setAutoRecordEnabled] = useState(true);
   const [silenceDetectionEnabled, setSilenceDetectionEnabled] = useState(true);
   const [audioLevel, setAudioLevel] = useState(0);
-  const [speechRate, setSpeechRate] = useState(1.2); // Default pace set to 1.2
   
   const audioChunks = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -118,12 +117,6 @@ export default function StartInterview() {
       cleanupServices();
       router.push('/home');
     }
-  };
-
-  // Function to adjust speech rate
-  const adjustSpeechRate = (delta: number) => {
-    const newRate = Math.max(0.5, Math.min(2.0, speechRate + delta));
-    setSpeechRate(newRate);
   };
 
   useEffect(() => {
@@ -262,58 +255,19 @@ export default function StartInterview() {
     speechSynthesis.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = speechRate; // Use the current speech rate
-    utterance.pitch = 1.0; // Neutral pitch for male voice
+    utterance.rate = 1.25;
+    utterance.pitch = 1.4;
     utterance.volume = 1.0;
 
     const voices = speechSynthesis.current.getVoices();
+    const preferredVoice = voices.find(voice =>
+      voice.name.includes('English') &&
+      (voice.name.includes('Female') || voice.name.includes('Male'))
+    ) || voices.find(voice => voice.default);
+
     
-    // Priority order for male voices
-    const maleVoicePreferences = [
-      'Google UK English Male',
-      'Microsoft David',
-      'Microsoft Mark',
-      'Alex',
-      'Google US English Male',
-      'Microsoft Zira Desktop', // Sometimes appears as male
-    ];
-
-    let selectedVoice = null;
-
-    // First, try to find a voice by exact name match
-    for (const preference of maleVoicePreferences) {
-      selectedVoice = voices.find(voice => voice.name === preference);
-      if (selectedVoice) break;
-    }
-
-    // If no exact match, look for voices containing male-related keywords
-    if (!selectedVoice) {
-      selectedVoice = voices.find(voice => 
-        voice.name.toLowerCase().includes('male') ||
-        voice.name.toLowerCase().includes('man') ||
-        voice.name.toLowerCase().includes('david') ||
-        voice.name.toLowerCase().includes('mark') ||
-        voice.name.toLowerCase().includes('alex')
-      );
-    }
-
-    // If still no male voice found, filter by gender property (if available)
-    if (!selectedVoice) {
-      selectedVoice = voices.find(voice => 
-        voice.name.includes('English') && 
-        !voice.name.toLowerCase().includes('female') &&
-        !voice.name.toLowerCase().includes('woman')
-      );
-    }
-
-    // Last resort: use default voice or first available
-    if (!selectedVoice) {
-      selectedVoice = voices.find(voice => voice.default) || voices[0];
-    }
-
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-      console.log(`Using voice: ${selectedVoice.name}`);
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
     }
 
     utterance.onstart = () => {
@@ -429,7 +383,7 @@ export default function StartInterview() {
           <p className="text-gray-500 text-sm">Interview ID: {interviewId}</p>
         </div>
 
-        <div className="flex justify-center space-x-4 flex-wrap gap-4">
+        <div className="flex justify-center space-x-6">
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3">
             <span className="text-sm font-medium">Auto Recording:</span>
             <button
@@ -468,33 +422,6 @@ export default function StartInterview() {
             </span>
           </div>
 
-          {/* Speech Rate Control */}
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3">
-            <span className="text-sm font-medium">Speech Pace:</span>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => adjustSpeechRate(-0.1)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm transition-colors"
-                title="Decrease pace"
-              >
-                −
-              </button>
-              <span className="text-sm font-mono min-w-[3rem] text-center">
-                {speechRate.toFixed(1)}x
-              </span>
-              <button
-                onClick={() => adjustSpeechRate(0.1)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm transition-colors"
-                title="Increase pace"
-              >
-                +
-              </button>
-            </div>
-            <span className="text-xs text-gray-400">
-              {speechRate < 0.8 ? 'Slow' : speechRate > 1.4 ? 'Fast' : 'Normal'}
-            </span>
-          </div>
-
           <button
             onClick={endInterview}
             className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-medium transition-all flex items-center space-x-2"
@@ -522,9 +449,6 @@ export default function StartInterview() {
                       Auto stop is enabled - recording will stop after 3 seconds of silence
                     </p>
                   )}
-                  <p className="text-gray-600 text-xs">
-                    Male voice enabled • Speech pace: {speechRate.toFixed(1)}x
-                  </p>
                 </div>
               </div>
             ) : (
@@ -618,7 +542,7 @@ export default function StartInterview() {
             <div className="w-2 h-2 bg-white rounded-full animate-ping delay-100" />
             <div className="w-2 h-2 bg-white rounded-full animate-ping delay-200" />
           </div>
-          <span className="text-sm font-medium">AI Speaking ({speechRate.toFixed(1)}x)</span>
+          <span className="text-sm font-medium">AI Speaking</span>
           {autoRecordEnabled && (
             <span className="text-xs bg-white/20 px-2 py-1 rounded">
               Will auto-record when finished
@@ -679,7 +603,7 @@ export default function StartInterview() {
         </div>
 
         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
-          <h3 className="font-medium mb-2">💡 Interview Tips</h3>
+          <h3 className="font-medium mb-2"> Interview Tips</h3>
           <ul className="text-gray-400 text-sm space-y-1">
             <li>• Speak clearly and at a moderate pace</li>
             <li>• Keep responses under 2 minutes to avoid file size issues</li>
@@ -690,8 +614,6 @@ export default function StartInterview() {
             <li>• {autoRecordEnabled ? "Recording will start automatically after AI finishes speaking" : "Click 'Start Recording' when ready to respond"}</li>
             <li>• {silenceDetectionEnabled ? "Recording will stop automatically after 3 seconds of silence" : "You need to manually stop recording"}</li>
             <li>• Toggle auto-recording and auto-stop using the switches above</li>
-            <li>• Adjust AI speech pace using the +/- buttons (Current: {speechRate.toFixed(1)}x)</li>
-            <li>• Male voice is enabled for consistent interview experience</li>
             <li>• Click "END INTERVIEW" to finish and return to past interviews</li>
           </ul>
         </div>
