@@ -13,8 +13,6 @@ export default function StartInterview() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [autoRecordEnabled, setAutoRecordEnabled] = useState(true);
-  const [silenceDetectionEnabled, setSilenceDetectionEnabled] = useState(true);
-  const [audioLevel, setAudioLevel] = useState(0);
   
   const audioChunks = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -22,57 +20,7 @@ export default function StartInterview() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const speechSynthesis = useRef<SpeechSynthesis | null>(null);
   const autoRecordTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-
-  const monitorAudioLevel = () => {
-    if (!analyserRef.current) return;
-
-    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-    analyserRef.current.getByteFrequencyData(dataArray);
-    
-    const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-    setAudioLevel(average);
-
-    if (isRecording && silenceDetectionEnabled) {
-      const silenceThreshold = 10; 
-      
-      if (average < silenceThreshold) {
-        if (!silenceTimeoutRef.current) {
-          silenceTimeoutRef.current = setTimeout(() => {
-            if (isRecording) {
-              stopRecording();
-            }
-          }, 4000); 
-        }
-      } else {
-        if (silenceTimeoutRef.current) {
-          clearTimeout(silenceTimeoutRef.current);
-          silenceTimeoutRef.current = null;
-        }
-      }
-    }
-
-    if (isRecording) {
-      animationFrameRef.current = requestAnimationFrame(monitorAudioLevel);
-    }
-  };
-
-  const setupAudioAnalysis = (stream: MediaStream) => {
-    try {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 256;
-      source.connect(analyserRef.current);
-      streamRef.current = stream;
-    } catch (error) {
-      console.error("Error setting up audio analysis:", error);
-    }
-  };
 
   const cleanupServices = () => {
     if (isRecording && mediaRecorder) {
@@ -85,22 +33,12 @@ export default function StartInterview() {
       setIsSpeaking(false);
     }
 
-    // Clear
+    // Clear timeouts and intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
     if (autoRecordTimeoutRef.current) {
       clearTimeout(autoRecordTimeoutRef.current);
-    }
-    if (silenceTimeoutRef.current) {
-      clearTimeout(silenceTimeoutRef.current);
-    }
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
     }
 
     if (streamRef.current) {
@@ -109,11 +47,10 @@ export default function StartInterview() {
 
     setIsProcessing(false);
     setRecordingTime(0);
-    setAudioLevel(0);
   };
 
   const endInterview = () => {
-    if (confirm("Are you sure you want to end this interview?.")) {
+    if (confirm("Are you sure you want to end this interview?")) {
       cleanupServices();
       router.push('/home');
     }
@@ -161,7 +98,7 @@ export default function StartInterview() {
       recorder.onstop = handleStop;
       setMediaRecorder(recorder);
       
-      setupAudioAnalysis(stream);
+      streamRef.current = stream;
     });
 
     return () => {
@@ -190,35 +127,15 @@ export default function StartInterview() {
       intervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-      
-      if (silenceDetectionEnabled) {
-        monitorAudioLevel();
-      }
     } else {
       clearInterval(intervalRef.current!);
       setRecordingTime(0);
-      
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-      
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-        silenceTimeoutRef.current = null;
-      }
     }
 
     return () => {
       clearInterval(intervalRef.current!);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-      }
     };
-  }, [isRecording, silenceDetectionEnabled]);
+  }, [isRecording]);
 
   useEffect(() => {
     if (!isSpeaking && autoRecordEnabled && chat.length > 0 && !isRecording && !isProcessing) {
@@ -255,20 +172,29 @@ export default function StartInterview() {
     speechSynthesis.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.25;
-    utterance.pitch = 1.4;
+    utterance.rate = 1.2;
+    utterance.pitch = 1.8;
     utterance.volume = 1.0;
 
-    const voices = speechSynthesis.current.getVoices();
-    const preferredVoice = voices.find(voice =>
-      voice.name.includes('English') &&
-      (voice.name.includes('Female') || voice.name.includes('Male'))
-    ) || voices.find(voice => voice.default);
+    const voices = speechSynthesis.getVoices();
 
-    
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
+const preferredMaleVoices = [
+  "Google UK English Male", 
+  "Microsoft David Desktop", 
+  "Alex",                   
+  "Daniel",                 
+  "Google US English"       
+];
+
+const preferredVoice = voices.find(voice =>
+  preferredMaleVoices.includes(voice.name)
+) || voices.find(voice =>
+  voice.name.toLowerCase().includes("male")
+) || voices.find(voice => voice.default); 
+
+if (preferredVoice) {
+  utterance.voice = preferredVoice;
+}
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -276,7 +202,11 @@ export default function StartInterview() {
         clearTimeout(autoRecordTimeoutRef.current);
       }
     };
-    utterance.onend = () => setIsSpeaking(false);
+    
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+    
     utterance.onerror = (event) => {
       console.error("Speech synthesis error:", event);
       setIsSpeaking(false);
@@ -285,16 +215,8 @@ export default function StartInterview() {
     speechSynthesis.current.speak(utterance);
   };
 
-  const stopSpeaking = () => {
-    if (speechSynthesis.current) {
-      speechSynthesis.current.cancel();
-      setIsSpeaking(false);
-    }
-  };
-
   const startRecording = () => {
     if (!mediaRecorder) return;
-    stopSpeaking();
     if (autoRecordTimeoutRef.current) {
       clearTimeout(autoRecordTimeoutRef.current);
     }
@@ -403,25 +325,6 @@ export default function StartInterview() {
             </span>
           </div>
 
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3">
-            <span className="text-sm font-medium">Auto Stop:</span>
-            <button
-              onClick={() => setSilenceDetectionEnabled(!silenceDetectionEnabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                silenceDetectionEnabled ? 'bg-blue-600' : 'bg-gray-600'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  silenceDetectionEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-            <span className="text-xs text-gray-400">
-              {silenceDetectionEnabled ? 'Enabled' : 'Disabled'}
-            </span>
-          </div>
-
           <button
             onClick={endInterview}
             className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-medium transition-all flex items-center space-x-2"
@@ -441,12 +344,7 @@ export default function StartInterview() {
                   <p className="text-gray-500">Press record or Enter to begin your interview</p>
                   {autoRecordEnabled && (
                     <p className="text-gray-600 text-xs">
-                      Auto recording is enabled - recording will start automatically after AI speaks
-                    </p>
-                  )}
-                  {silenceDetectionEnabled && (
-                    <p className="text-gray-600 text-xs">
-                      Auto stop is enabled - recording will stop after 3 seconds of silence
+                      Auto recording is enabled - recording will start automatically after AI finishes speaking
                     </p>
                   )}
                 </div>
@@ -498,65 +396,52 @@ export default function StartInterview() {
                 </span>
               </div>
               <div className="font-mono text-lg">{formatTime(recordingTime)}</div>
-              {silenceDetectionEnabled && (
-                <div className="text-xs">
-                  {recordingTime > 120 ? " Long recording - consider stopping" : "Enter or stay silent to stop"}
-                </div>
-              )}
-              {!silenceDetectionEnabled && (
-                <div className="text-xs">
-                  {recordingTime > 180 ? " Long recording - press Enter to stop" : "Press Enter to stop"}
-                </div>
-              )}
+              <div className="text-xs">
+                Press Enter to stop
+              </div>
             </div>
           )}
 
-         {isSpeaking && (
-  <div className="relative px-6 py-3 flex items-center justify-center overflow-hidden rounded-b-3xl bg-gradient-to-r from-purple-500 via-blue-600 to-indigo-500">
-    <svg
-      className="absolute bottom-0 left-0 w-full h-full opacity-10"
-      viewBox="0 0 1440 320"
-      preserveAspectRatio="none"
-    >
-      <path
-        fill="white"
-        fillOpacity="1"
-        d="M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
-      >
-        <animate
-          attributeName="d"
-          dur="6s"
-          repeatCount="indefinite"
-          values="
-            M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L0,320Z;
-            M0,140L80,160C160,180,320,180,480,160C640,140,800,100,960,80C1120,60,1280,80,1440,120L1440,320L0,320Z;
-            M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L0,320Z
-          "
-        />
-      </path>
-    </svg>
+          {isSpeaking && (
+            <div className="relative px-6 py-3 flex items-center justify-center overflow-hidden rounded-b-3xl bg-gradient-to-r from-purple-500 via-blue-600 to-indigo-500">
+              <svg
+                className="absolute bottom-0 left-0 w-full h-full opacity-10"
+                viewBox="0 0 1440 320"
+                preserveAspectRatio="none"
+              >
+                <path
+                  fill="white"
+                  fillOpacity="1"
+                  d="M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
+                >
+                  <animate
+                    attributeName="d"
+                    dur="6s"
+                    repeatCount="indefinite"
+                    values="
+                      M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L0,320Z;
+                      M0,140L80,160C160,180,320,180,480,160C640,140,800,100,960,80C1120,60,1280,80,1440,120L1440,320L0,320Z;
+                      M0,160L60,149.3C120,139,240,117,360,112C480,107,600,117,720,133.3C840,149,960,171,1080,176C1200,181,1320,171,1380,165.3L1440,160L1440,320L0,320Z
+                    "
+                  />
+                </path>
+              </svg>
 
-        <div className="relative z-10 flex items-center space-x-3 text-white">
-          <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-            <div className="w-2 h-2 bg-white rounded-full animate-ping delay-100" />
-            <div className="w-2 h-2 bg-white rounded-full animate-ping delay-200" />
-          </div>
-          <span className="text-sm font-medium">AI Speaking</span>
-          {autoRecordEnabled && (
-            <span className="text-xs bg-white/20 px-2 py-1 rounded">
-              Will auto-record when finished
-            </span>
+              <div className="relative z-10 flex items-center space-x-3 text-white">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                  <div className="w-2 h-2 bg-white rounded-full animate-ping delay-100" />
+                  <div className="w-2 h-2 bg-white rounded-full animate-ping delay-200" />
+                </div>
+                <span className="text-sm font-medium">AI Speaking</span>
+                {autoRecordEnabled && (
+                  <span className="text-xs bg-white/20 px-2 py-1 rounded">
+                    Will auto-record when finished
+                  </span>
+                )}
+              </div>
+            </div>
           )}
-          <button
-            onClick={stopSpeaking}
-            className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm transition-all"
-          >
-            Stop
-          </button>
-        </div>
-      </div>
-    )}
 
           <div className="bg-gray-800 p-6 flex justify-center space-x-4">
             {!isRecording ? (
@@ -576,20 +461,10 @@ export default function StartInterview() {
               </button>
             )}
 
-            {isSpeaking && (
-              <button
-                onClick={stopSpeaking}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-xl font-medium"
-              >
-                Stop Speaking
-              </button>
-            )}
-
             {chat.length > 0 && (
               <button
                 onClick={() => {
                   setChat([]);
-                  stopSpeaking();
                   if (autoRecordTimeoutRef.current) {
                     clearTimeout(autoRecordTimeoutRef.current);
                   }
@@ -603,7 +478,7 @@ export default function StartInterview() {
         </div>
 
         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
-          <h3 className="font-medium mb-2"> Interview Tips</h3>
+          <h3 className="font-medium mb-2">💡 Interview Tips</h3>
           <ul className="text-gray-400 text-sm space-y-1">
             <li>• Speak clearly and at a moderate pace</li>
             <li>• Keep responses under 2 minutes to avoid file size issues</li>
@@ -611,9 +486,9 @@ export default function StartInterview() {
             <li>• Ask for clarification if needed</li>
             <li>• Be specific with your examples</li>
             <li>• Press <kbd className="bg-gray-700 px-1 rounded text-white">Enter</kbd> to start/stop recording</li>
-            <li>• {autoRecordEnabled ? "Recording will start automatically after AI finishes speaking" : "Click 'Start Recording' when ready to respond"}</li>
-            <li>• {silenceDetectionEnabled ? "Recording will stop automatically after 3 seconds of silence" : "You need to manually stop recording"}</li>
-            <li>• Toggle auto-recording and auto-stop using the switches above</li>
+            <li>• {autoRecordEnabled ? "Recording will start automatically 1.5 seconds after AI finishes speaking" : "Click 'Start Recording' when ready to respond"}</li>
+            <li>• Use Enter key to stop recording when you're done speaking</li>
+            <li>• Toggle auto-recording using the switch above</li>
             <li>• Click "END INTERVIEW" to finish and return to past interviews</li>
           </ul>
         </div>
