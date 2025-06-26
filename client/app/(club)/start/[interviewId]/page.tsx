@@ -33,6 +33,7 @@ export default function StartInterview() {
       setIsSpeaking(false);
     }
 
+    // Clear timeouts and intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -136,6 +137,7 @@ export default function StartInterview() {
     };
   }, [isRecording]);
 
+  // Auto-record only after AI finishes speaking
   useEffect(() => {
     if (!isSpeaking && autoRecordEnabled && chat.length > 0 && !isRecording && !isProcessing) {
       if (autoRecordTimeoutRef.current) {
@@ -162,6 +164,40 @@ export default function StartInterview() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const getMaleVoice = () => {
+    if (!speechSynthesis.current) return null;
+    
+    const voices = speechSynthesis.current.getVoices();
+    
+    const preferredMaleVoices = [
+      "Google US English",                                    
+      "Microsoft David Desktop - English (United States)",   
+      "Google UK English Male",                               
+      "Microsoft David Desktop",                              
+      "Alex",                                               
+      "Daniel",                                             
+      "Google UK English",                                   
+    ];
+    
+    let voice = voices.find(v => preferredMaleVoices.includes(v.name));
+    
+    if (!voice) {
+      voice = voices.find(v => 
+        v.lang.startsWith("en") && v.name.toLowerCase().includes("male")
+      );
+    }
+    
+    if (!voice) {
+      voice = voices.find(v => v.lang === "en-US");
+    }
+    
+    if (!voice) {
+      voice = voices.find(v => v.default);
+    }
+    
+    return voice;
+  };
+
   const speakText = (text: string) => {
     if (!speechSynthesis.current) {
       console.error("Speech synthesis not supported");
@@ -171,28 +207,27 @@ export default function StartInterview() {
     speechSynthesis.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.3;
-    utterance.pitch = 1.6;
+    utterance.rate = 1.1;
+    utterance.pitch = 1.3;
     utterance.volume = 1.0;
 
-    const voices = speechSynthesis.current.getVoices();
-    
-    const preferredMaleVoices = [
-      "Google UK English Male", 
-      "Microsoft David Desktop", 
-      "Alex",                   
-      "Daniel",                
-      "Google US English"       
-    ];
-    
-    const preferredVoice = voices.find(voice =>
-      preferredMaleVoices.includes(voice.name)
-    ) || voices.find(voice =>
-      voice.name.toLowerCase().includes("male")
-    ) || voices.find(voice => voice.default); 
+    const setVoiceAndSpeak = () => {
+      const voice = getMaleVoice();
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang; 
+        console.log(`Using voice: ${voice.name} (${voice.lang})`);
+      }
+      
+      speechSynthesis.current!.speak(utterance);
+    };
 
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+    if (speechSynthesis.current.getVoices().length === 0) {
+      speechSynthesis.current.onvoiceschanged = () => {
+        setVoiceAndSpeak();
+      };
+    } else {
+      setVoiceAndSpeak();
     }
 
     utterance.onstart = () => {
@@ -210,8 +245,6 @@ export default function StartInterview() {
       console.error("Speech synthesis error:", event);
       setIsSpeaking(false);
     };
-
-    speechSynthesis.current.speak(utterance);
   };
 
   const startRecording = () => {
