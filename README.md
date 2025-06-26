@@ -22,14 +22,15 @@
 
 <div align="center">
   <a href="https://youtu.be/wAD6VZNPW40">
-    <img src="https://img.youtube.com/vi/PQrJlvjPC6A/maxresdefault.jpg" 
+    <img src="https://img.youtube.com/vi/wAD6VZNPW40/maxresdefault.jpg" 
          alt="FOA Demo Video" 
          width="600"
          style="border: 2px solid #ff0000; border-radius: 10px;">
   </a>
   <br>
-  <strong> Play Demo Video</strong>
+  <strong>Play Demo Video</strong>
 </div>
+
 
 ## ✅ Why FOA Is the First of Its Kind
 
