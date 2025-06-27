@@ -3,11 +3,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-if (!process.env.GEMINI_API_KEY) {
+if (!process.env.GEMINI_API_KEY2) {
   throw new Error('GEMINI_API_KEY is required in environment variables');
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY2);
 
 const idealAns = async(chatHistory, data) => {
     try {
