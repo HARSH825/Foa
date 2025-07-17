@@ -7,7 +7,7 @@ import cors from 'cors'
 
 const app = express();
 dotenv.config();
-const allowedOrigins = ['https://app.foai.run.place' , 'https://foa-crush-it.vercel.app'];
+const allowedOrigins = ['https://app.foai.run.place' , 'https://foa-crush-it.vercel.app','https://app.foai.harshdev.cloud'];
 
 app.use(cors({
   origin: allowedOrigins,
