@@ -1,1 +1,1 @@
-export const BE_URL = "https://apifoai.up.railway.app"
+export const BE_URL = "https://api.foai.harshdev.cloud"
