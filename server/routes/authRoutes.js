@@ -34,7 +34,7 @@ router.get(
         { expiresIn: "3d" }
       );
 
-      res.redirect(`https://foa-crush-it.vercel.app/home?token=${token}`);
+      res.redirect(`https://app.foai.harshdev.cloud/home?token=${token}`);
     } catch (err) {
       console.error(" Error in Google callback handler:", err);
       res.status(500).json({ error: "Internal server error during auth" });
