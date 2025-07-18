@@ -1,4 +1,4 @@
-# FOA – Your AI-Powered Interview Coach   [▶ Live Link](https://foa-crush-it.vercel.app)
+# FOA – Your AI-Powered Interview Coach   [▶ Live Link](https://app.foai.harshdev.cloud)
 
 > **FOA** is the **first and only** free platform that gives candidates a true-to-life, voice-based AI interview simulation — personalized to their resume, job role, and skills. It's not just practice — it's preparation, perfected.
 
